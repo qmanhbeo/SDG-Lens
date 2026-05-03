@@ -1,0 +1,68 @@
+Paper-aligned replication completed.
+Output folder: replication_results
+Rows in CSV: 167
+Rows used for clustering: 143
+Missing progress values dropped: 24
+KMeans settings: {'init': 'k-means++', 'n_init': 1, 'random_state': 42}
+
+Cluster sizes (k=5):
+{0: 56, 1: 33, 2: 35, 3: 2, 4: 17}
+
+Table 2 / Figure 5 (paper-aligned):
+ k  WCSS (Inertia)  Silhouette Score
+ 2      470.215859          0.330908
+ 3      345.376528          0.377299
+ 4      220.940704          0.403143
+ 5      169.692762          0.405511
+ 6      150.810466          0.338451
+ 7      133.120291          0.340670
+ 8      123.324005          0.273683
+ 9      113.672557          0.262040
+10      105.188483          0.252328
+
+Preview-only n_init comparison (single run per setting):
+ k  n_init  WCSS (Inertia)  Silhouette Score
+ 2       5      461.121193          0.354613
+ 2      10      461.121193          0.354613
+ 2      20      461.121193          0.354613
+ 3       5      331.769056          0.388478
+ 3      10      331.769056          0.388478
+ 3      20      331.769056          0.388478
+ 4       5      219.370124          0.406035
+ 4      10      219.370124          0.406035
+ 4      20      219.370124          0.406035
+ 5       5      169.032764          0.397084
+ 5      10      169.032764          0.397084
+ 5      20      169.032764          0.397084
+ 6       5      148.369273          0.411779
+ 6      10      147.631501          0.374328
+ 6      20      146.034758          0.381369
+ 7       5      129.535857          0.325317
+ 7      10      128.903054          0.332245
+ 7      20      128.903054          0.332245
+ 8       5      117.386682          0.293851
+ 8      10      116.057050          0.344385
+ 8      20      116.057050          0.344385
+ 9       5      107.558782          0.280569
+ 9      10      104.595834          0.360300
+ 9      20      103.565632          0.301213
+10       5       92.850647          0.318886
+10      10       92.850647          0.318886
+10      20       92.850647          0.318886
+
+Figure 4 correlation matrix (full dataframe):
+                 sdg_score  spillover_score  regional_score  population  progress
+sdg_score            1.000           -0.571           0.819       0.017    -0.162
+spillover_score     -0.571            1.000          -0.558       0.110     0.319
+regional_score       0.819           -0.558           1.000       0.046    -0.337
+population           0.017            0.110           0.046       1.000     0.020
+progress            -0.162            0.319          -0.337       0.020     1.000
+
+Computed Table 5 verification:
+              Model  Accuracy  Precision (Macro Avg)  Recall (Macro Avg)  F1 Score (Macro Avg)  ROC AUC (Macro)
+      Random Forest     0.977                  0.789               0.800                 0.794            1.000
+                SVM     0.977                  0.982               0.960                 0.968            1.000
+      Decision Tree     0.977                  0.989               0.960                 0.972            0.974
+            XGBoost     0.907                  0.750               0.708                 0.718            0.835
+                ANN     0.977                  0.982               0.988                 0.984            1.000
+Logistic Regression     0.953                  0.968               0.968                 0.968            0.994

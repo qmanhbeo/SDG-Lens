@@ -1,0 +1,5 @@
+Test Statistic,Value,F-Value,p-Value,Significant (p<0.05)
+Wilks' Lambda,0.01,302.39,0.0,Yes
+Pillai's Trace,1.792,297.882,0.0,Yes
+Hotelling-Lawley Trace,18.055,307.861,0.0,Yes
+Roy's Largest Root,11.013,379.955,0.0,Yes

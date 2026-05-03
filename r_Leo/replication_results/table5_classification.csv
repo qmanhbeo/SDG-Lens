@@ -1,0 +1,7 @@
+Model,Accuracy,Precision (Macro Avg),Recall (Macro Avg),F1 Score (Macro Avg),ROC AUC (Macro)
+Random Forest,0.977,0.789,0.8,0.794,1.0
+SVM,0.977,0.982,0.96,0.968,1.0
+Decision Tree,0.953,0.948,0.976,0.96,0.974
+XGBoost,0.907,0.75,0.708,0.718,0.835
+ANN,0.977,0.982,0.988,0.984,1.0
+Logistic Regression,0.953,0.968,0.968,0.968,0.994
