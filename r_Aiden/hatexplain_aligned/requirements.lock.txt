@@ -1,0 +1,8 @@
+numpy>=1.26
+requests>=2.31
+PyYAML>=6.0
+scikit-learn>=1.4
+tqdm>=4.66
+transformers>=4.40
+datasets>=2.18
+torch>=2.1
