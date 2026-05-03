@@ -5,6 +5,22 @@
 
 ---
 
+## Implementation Status (2026-05-03)
+
+A minimal working prototype now exists in `solution1_sdg_lens/`.
+
+- Entrypoint: `solution1_sdg_lens/run.py`
+- Output: `solution1_sdg_lens/outputs/results.json`
+- Verified command: `cd solution1_sdg_lens && python run.py`
+- Current default: CPU, frozen cached MiniLM/BERT-family encoder, English-only
+  SDGi subset, 200 train rows, 60 test rows, one epoch.
+- Current result from the smoke run: micro-F1 `0.1238`, macro-F1 `0.0609`,
+  five attention-proxy explanations saved.
+- Limitation: SDGi has no token-level rationale ground truth; explanations are
+  last-layer CLS attention proxies only.
+
+---
+
 ## 1. Repo Inspection Summary
 
 ### r_Ting Pipeline (TF-IDF + Linear)
