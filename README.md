@@ -20,6 +20,7 @@ Together, these provide a foundation for exploring AI applications in sustainabl
 
 | Dataset | Description | Size |
 |---------|-------------|------|
+| `GSP/` | Country-level SDG index scores | ~12KB |
 | `SDGi/` | UNDP SDG articles with 17 labels | ~130MB |
 | `HateXplain/` | Hate speech with rationales | ~12MB |
 
