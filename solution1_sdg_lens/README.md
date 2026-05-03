@@ -50,6 +50,20 @@ Reload and revalidate a saved checkpoint:
 python run.py --load outputs/runs/YYYYMMDD_HHMMSS/model.pt --eval-only
 ```
 
+Create report figures from a run:
+
+```bash
+python plot_results.py --results outputs/runs/YYYYMMDD_HHMMSS/results.json
+```
+
+This writes:
+
+```text
+fig_metrics.png
+fig_per_label_f1.png
+fig_explanation_examples.png
+```
+
 The JSON contains `run_config`, `metrics`, `examples`, and a backward-compatible
 `metadata` alias. Attention scores are explanation proxies only; SDGi does not
 include token-level rationale ground truth, so these explanations are not
