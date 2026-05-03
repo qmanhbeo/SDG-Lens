@@ -1,0 +1,408 @@
+[
+  {
+    "text": "23 Goal 9 Industry, Innovation and Infrastructure Toyama City is an industrial hub and home to many businesses. However, the number of younger residents departing the city for higher education or for work has exceeded those who join as residents. To generate stable employment, Toyama needs to implement a growth strategy that would develop new markets and attract businesses with strong potential. Toyama City is making efforts to transition to a city of commerce, services, and culture and recognized for its sound infrastructure. SDG target Toyama Indicator Past Last Plan 9.1 Develop sustainable, resilient and inclusive infrastructure Proportion of aseismic distributing water pipes 42％ （2016...",
+    "gold_labels": [
+      9
+    ],
+    "predicted_labels": [
+      9
+    ],
+    "top_label_scores": [
+      {
+        "label": 9,
+        "score": 0.9793
+      },
+      {
+        "label": 8,
+        "score": 0.098
+      },
+      {
+        "label": 11,
+        "score": 0.0525
+      },
+      {
+        "label": 7,
+        "score": 0.0438
+      },
+      {
+        "label": 17,
+        "score": 0.0419
+      }
+    ],
+    "top_tokens": [
+      {
+        "token": "industry",
+        "score": 0.138806
+      },
+      {
+        "token": "innovation",
+        "score": 0.114486
+      },
+      {
+        "token": "infrastructure",
+        "score": 0.103904
+      },
+      {
+        "token": "9",
+        "score": 0.081754
+      },
+      {
+        "token": "infrastructure",
+        "score": 0.068356
+      },
+      {
+        "token": "industrial",
+        "score": 0.060841
+      },
+      {
+        "token": "infrastructure",
+        "score": 0.034163
+      },
+      {
+        "token": "businesses",
+        "score": 0.033744
+      },
+      {
+        "token": "goal",
+        "score": 0.025146
+      },
+      {
+        "token": "employment",
+        "score": 0.023122
+      },
+      {
+        "token": "businesses",
+        "score": 0.015999
+      },
+      {
+        "token": "pipes",
+        "score": 0.014534
+      }
+    ]
+  },
+  {
+    "text": "56 Voluntary National Review of Turkmenistan peace, jusTIce and 16 sTrong InsTITuTes Voluntary National Review of Turkmenistan 57 Turkmenistan pays special attention to the creation of the conditions necessary for building democratic and inclusive society, which is based on the rule of law and accountability of institutions at all levels to ensure basic human freedoms. To achieve this, the government is implementing the reform of national human rights protection system by carrying out activities focused on strengthening democratic principles in society, legal framework of the State and development of civil society. Turkmenistan has been an active member of the Executive Committee of the U...",
+    "gold_labels": [
+      16
+    ],
+    "predicted_labels": [
+      16
+    ],
+    "top_label_scores": [
+      {
+        "label": 16,
+        "score": 0.8056
+      },
+      {
+        "label": 10,
+        "score": 0.0352
+      },
+      {
+        "label": 17,
+        "score": 0.0343
+      },
+      {
+        "label": 5,
+        "score": 0.0343
+      },
+      {
+        "label": 1,
+        "score": 0.0213
+      }
+    ],
+    "top_tokens": [
+      {
+        "token": "peace",
+        "score": 0.226337
+      },
+      {
+        "token": "democratic",
+        "score": 0.083882
+      },
+      {
+        "token": "justice",
+        "score": 0.042526
+      },
+      {
+        "token": "turkmenistan",
+        "score": 0.030714
+      },
+      {
+        "token": "democratic",
+        "score": 0.029763
+      },
+      {
+        "token": "refugees",
+        "score": 0.028005
+      },
+      {
+        "token": "institutes",
+        "score": 0.026199
+      },
+      {
+        "token": "turkmenistan",
+        "score": 0.022642
+      },
+      {
+        "token": "national",
+        "score": 0.022534
+      },
+      {
+        "token": "rights",
+        "score": 0.021303
+      },
+      {
+        "token": "16",
+        "score": 0.020907
+      },
+      {
+        "token": "society",
+        "score": 0.020374
+      }
+    ]
+  },
+  {
+    "text": "34 GUIDELINES  Ensure access to housing and services for all and increase social diversity in cities  Establish shared governance for collective construction of the urban environment  Strengthen the sustainability of cities and preserve the architectural heritage  Encourage urban resilience by enhancing risk prevention  Encourage the emergence of innovations and develop smart cities  Internationally, encourage inclusive, sound and resilient urban development ISSUES AND ACTIONS IN FRANCE At a time when cities are continuing to grow rapidly by expanding towards peripheral areas, the development of more sustainable cities is a major challenge in order to improve residents’ quality of l...",
+    "gold_labels": [
+      11
+    ],
+    "predicted_labels": [
+      11
+    ],
+    "top_label_scores": [
+      {
+        "label": 11,
+        "score": 0.9649
+      },
+      {
+        "label": 1,
+        "score": 0.1279
+      },
+      {
+        "label": 17,
+        "score": 0.1086
+      },
+      {
+        "label": 9,
+        "score": 0.0988
+      },
+      {
+        "label": 10,
+        "score": 0.0961
+      }
+    ],
+    "top_tokens": [
+      {
+        "token": "housing",
+        "score": 0.08989
+      },
+      {
+        "token": "urban",
+        "score": 0.054323
+      },
+      {
+        "token": "cities",
+        "score": 0.050838
+      },
+      {
+        "token": "social",
+        "score": 0.046866
+      },
+      {
+        "token": "governance",
+        "score": 0.039383
+      },
+      {
+        "token": "construction",
+        "score": 0.036155
+      },
+      {
+        "token": "cities",
+        "score": 0.034604
+      },
+      {
+        "token": "housing",
+        "score": 0.033027
+      },
+      {
+        "token": "cities",
+        "score": 0.032627
+      },
+      {
+        "token": "cities",
+        "score": 0.031656
+      },
+      {
+        "token": "diversity",
+        "score": 0.031213
+      },
+      {
+        "token": "##ili",
+        "score": 0.028562
+      }
+    ]
+  },
+  {
+    "text": "MONGOLIA VOLUNTARY NATIONAL REVIEW REPORT 2019 29 Goal 11. Make Cities and Human Settlement Inclusive, Safe, Resilient and Sustainable It is possible to reduce urban concentration through more equal regional development. Around 65 percent of Mongolia’s economic production is concentrated in Ulaanbaatar, with up to 60 percent of total manufacturing products, up to 90 percent of construction, up to 85 percent of wholesale and retail trade, and up to 98 percent of information and telecommunications are produced in the capital. Also, as of 2017, 124 thousand enterprises operated in Ulaanbaatar, accounting for 75 percent of the total number of enterprises in the country. 30 MONGOLIA VOLUNTARY...",
+    "gold_labels": [
+      11
+    ],
+    "predicted_labels": [
+      11
+    ],
+    "top_label_scores": [
+      {
+        "label": 11,
+        "score": 0.4096
+      },
+      {
+        "label": 9,
+        "score": 0.0998
+      },
+      {
+        "label": 8,
+        "score": 0.0317
+      },
+      {
+        "label": 12,
+        "score": 0.0177
+      },
+      {
+        "label": 17,
+        "score": 0.0125
+      }
+    ],
+    "top_tokens": [
+      {
+        "token": "cities",
+        "score": 0.122597
+      },
+      {
+        "token": "settlement",
+        "score": 0.100425
+      },
+      {
+        "token": "11",
+        "score": 0.093277
+      },
+      {
+        "token": "urban",
+        "score": 0.07261
+      },
+      {
+        "token": "manufacturing",
+        "score": 0.062567
+      },
+      {
+        "token": "enterprises",
+        "score": 0.047611
+      },
+      {
+        "token": "##ili",
+        "score": 0.046425
+      },
+      {
+        "token": "economic",
+        "score": 0.030052
+      },
+      {
+        "token": "sustainable",
+        "score": 0.029716
+      },
+      {
+        "token": "enterprises",
+        "score": 0.028735
+      },
+      {
+        "token": "safe",
+        "score": 0.026101
+      },
+      {
+        "token": "concentration",
+        "score": 0.022572
+      }
+    ]
+  },
+  {
+    "text": "30 Digital inclusion of people The use of the Internet and digital devices implies being part of a \"connected” society, where digital inclusion operates as an advantage and is key to development, thus contributing significantly to people's well-being. In this sense, the Government of the Province of Córdoba considers that information and communication technologies contribute to accelerating the achievement of the SDGs, particularly SDG 10: Reduced Inequalities. The great challenge in terms of digital inclusion is indeed the reduction of the digital divide. In this context, it is important to state that the Government of the Province considers that there are diferent forms of inequality be...",
+    "gold_labels": [
+      10
+    ],
+    "predicted_labels": [
+      9,
+      10
+    ],
+    "top_label_scores": [
+      {
+        "label": 10,
+        "score": 0.5635
+      },
+      {
+        "label": 9,
+        "score": 0.4899
+      },
+      {
+        "label": 11,
+        "score": 0.0755
+      },
+      {
+        "label": 16,
+        "score": 0.0679
+      },
+      {
+        "label": 7,
+        "score": 0.0443
+      }
+    ],
+    "top_tokens": [
+      {
+        "token": "internet",
+        "score": 0.137832
+      },
+      {
+        "token": "##qual",
+        "score": 0.097898
+      },
+      {
+        "token": "10",
+        "score": 0.081432
+      },
+      {
+        "token": "digital",
+        "score": 0.068344
+      },
+      {
+        "token": "digital",
+        "score": 0.056405
+      },
+      {
+        "token": "digital",
+        "score": 0.055714
+      },
+      {
+        "token": "communication",
+        "score": 0.040761
+      },
+      {
+        "token": "digital",
+        "score": 0.03737
+      },
+      {
+        "token": "technologies",
+        "score": 0.034719
+      },
+      {
+        "token": "devices",
+        "score": 0.034597
+      },
+      {
+        "token": "information",
+        "score": 0.030931
+      },
+      {
+        "token": "digital",
+        "score": 0.030613
+      }
+    ]
+  }
+]

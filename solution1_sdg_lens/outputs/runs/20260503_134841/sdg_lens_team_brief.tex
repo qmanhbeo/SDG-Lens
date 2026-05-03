@@ -78,6 +78,27 @@ Avg. predicted labels & 1.36 \\
 \includegraphics[width=\linewidth]{fig_metrics.png}
 \end{minipage}
 
+\subsection*{TF-IDF Baseline Comparison}
+We also ran a TF-IDF + linear SVM baseline for comparison:
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+Method & Micro-F1 & Macro-F1 & Weighted-F1 & Subset Acc. \\
+\midrule
+TF-IDF + LinearSVC (2k) & 0.701 & 0.706 & 0.702 & 0.557 \\
+TF-IDF + LinearSVC (4k) & 0.719 & 0.719 & 0.719 & 0.610 \\
+SDG Lens (MiniLM, 2k)   & 0.661 & 0.642 & 0.657 & 0.657 \\
+SDG Lens (MiniLM, 4k)   & 0.705 & 0.687 & 0.705 & 0.693 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Key insight: with 2k, TF-IDF wins. With 4k, BERT catches up fast. At 6-8k examples,
+BERT would likely surpass. This is the classic transformer scaling pattern —
+they need more data to shine. But SDG Lens offers attention explanations
+that TF-IDF cannot.
+
 \textbf{Plain-English reading:} the model is performing reasonably on held-out
 test examples for a prototype. It is not just producing labels; it also gives a
 lightweight way to inspect whether the prediction is based on sensible
