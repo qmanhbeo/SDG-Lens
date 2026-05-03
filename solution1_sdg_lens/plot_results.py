@@ -90,6 +90,13 @@ def truncate_token(token: Any, max_chars: int = 18) -> str:
     return token
 
 
+def short_label(label: Any, max_chars: int = 34) -> str:
+    label = str(label)
+    if len(label) > max_chars:
+        return label[:max_chars].rsplit(" ", 1)[0] + "..."
+    return label
+
+
 def output_dir_from_results(results: dict[str, Any], fallback: Path) -> Path:
     run_config = results.get("run_config", {}) or results.get("metadata", {}) or {}
     run_dir = run_config.get("run_dir")
@@ -162,21 +169,20 @@ def save_examples_figure(examples: list[dict[str, Any]], out_dir: Path, n_exampl
     fig, axes = plt.subplots(
         nrows=len(picked),
         ncols=3,
-        figsize=(15, 13),
+        figsize=(15, 17),
         dpi=220,
-        constrained_layout=True,
-        gridspec_kw={"width_ratios": [2.6, 1.4, 1.4]},
+        gridspec_kw={"width_ratios": [1.65, 1.55, 1.55]}
     )
     if len(picked) == 1:
         axes = [axes]
 
     for row_idx, (row_axes, example) in enumerate(zip(axes, picked), start=1):
         text_ax, scores_ax, tokens_ax = row_axes
-        gold = format_label_list(example.get("gold_labels", []), width=58)
-        pred = format_label_list(example.get("predicted_labels", []), width=58)
+        gold = ", ".join(str(int(l)) for l in (example.get("gold_labels", []) or [])) or "none"
+        pred = ", ".join(str(int(l)) for l in (example.get("predicted_labels", []) or [])) or "none"
         quality = example.get("example_quality")
         title = f"Example {row_idx}" + (f" ({quality})" if quality else "")
-        excerpt = wrap_text(shorten_text(example.get("text", ""), max_chars=300), width=56)
+        excerpt = wrap_text(shorten_text(example.get("text", ""), max_chars=180), width=38)
         text_ax.axis("off")
         text_ax.text(
             0.0,
@@ -189,8 +195,9 @@ def save_examples_figure(examples: list[dict[str, Any]], out_dir: Path, n_exampl
             transform=text_ax.transAxes,
         )
 
-        label_scores = list(example.get("top_label_scores", []))[:3]
-        score_names = [wrapped_sdg_label(item["label"], width=22) for item in label_scores]
+        label_scores = list(example.get("top_label_scores", []))
+        label_scores = label_scores[:5]
+        score_names = [short_label(wrapped_sdg_label(item["label"], width=22)) for item in label_scores]
         score_values = [float(item["score"]) for item in label_scores]
         score_y = list(range(len(score_names)))
         scores_ax.barh(score_y, score_values, color="#3465a4")
@@ -224,6 +231,14 @@ def save_examples_figure(examples: list[dict[str, Any]], out_dir: Path, n_exampl
         "SDG Lens: Five Held-Out Explanation Examples\n"
         "Attention is a proxy explanation, not a validated rationale.",
         fontsize=13.5,
+    )
+    fig.subplots_adjust(
+        left=0.035,
+        right=0.985,
+        top=0.94,
+        bottom=0.04,
+        wspace=0.20,
+        hspace=0.38
     )
     path = out_dir / "fig_explanation_examples.png"
     fig.savefig(path, dpi=220)
@@ -307,14 +322,14 @@ def build_mixed_examples(results: dict[str, Any], checkpoint_path: Path, device_
 
     selected = pick_diverse(exact, true_rows, 3)
     if partial:
-        selected.extend(pick_diverse(partial, true_rows, 1))
+        selected.extend(pick_diverse(partial, true_rows, 2))
     if wrong:
-        selected.extend(pick_diverse(wrong, true_rows, 1))
-    if len(selected) < 5:
+        selected.extend(pick_diverse(wrong, true_rows, 2))
+    if len(selected) < 7:
         selected.extend(idx for idx in range(len(test_frame)) if idx not in selected)
-    selected = selected[:5]
+    selected = selected[:7]
 
-    qualities = ["Good", "Good", "Good", "So-so / partial", "Bad"]
+    qualities = ["Good", "Good", "Good", "So-so / partial", "So-so / partial", "Bad", "Bad"]
     selected_frame = test_frame.iloc[selected].reset_index(drop=True)
     examples = explain_examples(
         model=model,

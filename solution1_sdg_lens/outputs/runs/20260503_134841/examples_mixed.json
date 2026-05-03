@@ -332,6 +332,91 @@
     "example_quality": "So-so / partial"
   },
   {
+    "text": "CASE STUDY Council’s carbon neutral accreditation Council has taken significant action to achieve net zero greenhouse gas emissions for its operations and has been Australia’s largest carbon neutral government organisation since 2017. Since achieving carbon neutral certification, Council has made significant progress in delivering energy efficiency and emissions reduction projects. Energy-efficient lighting has been fitted across the city’s streets and other public places as well as Council buildings and facilities. Council’s emissions reduction projects span all facilities and services including integrating electric vehicles into its fleet, diverting waste from landfill, increasing the r...",
+    "gold_labels": [
+      3,
+      7,
+      13
+    ],
+    "predicted_labels": [
+      7,
+      13
+    ],
+    "top_label_scores": [
+      {
+        "label": 13,
+        "score": 0.8507
+      },
+      {
+        "label": 7,
+        "score": 0.763
+      },
+      {
+        "label": 12,
+        "score": 0.2528
+      },
+      {
+        "label": 11,
+        "score": 0.2057
+      },
+      {
+        "label": 9,
+        "score": 0.1944
+      }
+    ],
+    "top_tokens": [
+      {
+        "token": "greenhouse",
+        "score": 0.089398
+      },
+      {
+        "token": "gas",
+        "score": 0.070877
+      },
+      {
+        "token": "emissions",
+        "score": 0.069081
+      },
+      {
+        "token": "carbon",
+        "score": 0.061512
+      },
+      {
+        "token": "lighting",
+        "score": 0.038904
+      },
+      {
+        "token": "carbon",
+        "score": 0.037135
+      },
+      {
+        "token": "emissions",
+        "score": 0.034247
+      },
+      {
+        "token": "carbon",
+        "score": 0.031319
+      },
+      {
+        "token": "energy",
+        "score": 0.030426
+      },
+      {
+        "token": "emissions",
+        "score": 0.023929
+      },
+      {
+        "token": "council",
+        "score": 0.021151
+      },
+      {
+        "token": "accreditation",
+        "score": 0.0169
+      }
+    ],
+    "example_quality": "So-so / partial"
+  },
+  {
     "text": "Suwon SDGs Action Report Conclusions 5arget \u0016\u000e\u0012\u000f $reating RualitZ Kobs #Z 2030 inDSease the emploZment Sate to \u00180\u0006 anE SeEuDe the pSopoS\u000e tion of tempoSaSZ woSLeSs anE EaZ laboSeSs to \u0012\u0016\u0006 DompaSeE to the enE of 20\u0012\u0017\u000f InEiDatoS \u0016\u000e\u0012\u000e\u0012\u000f &mploZment Sate in Suwon bZ EieSent HSoups suDh as female Zouth aHeE fSom \u0012\u0016 to 2\u001a the miEEle\u000eaHeE fSom \u0015\u0016 to \u00170 the elEeSlZ anE people with Eisabilities \u0016\u000e\u0012\u000e2\u000f 1SopoStion of SeHulaS woSLeSs out of total waHe woSLeSs 5arget \u0016\u000e2\u000f *mprovement of wages and worLing Donditions #Z 2030 inDSease waHe levels of tempoSaSZ woSLeSs to \u00190\u0006 anE those of EaZ laboSeSs to \u00180\u0006 of SeHulaS woSLeSs baseE on the pSinDiple of eRual paZ foS eRual woSL\u000f In aEEition SeEuDe woSLinH h...",
     "gold_labels": [
       8,
@@ -410,6 +495,88 @@
       {
         "token": "z",
         "score": 0.013488
+      }
+    ],
+    "example_quality": "Bad"
+  },
+  {
+    "text": "Unofficial translation \u0018\u0016 \u0016\u0011\u0017\u0011 (QVXULQJ $FFHVVLELOLW\\ DQG 4XDOLW\\ RI (GXFDWLRQ (GXFDWLRQ KDV VLJQLILFDQW SRWHQWLDO WR UHGXFH YXOQHUDELOLWLHV DQG UH\u0010H[DPLQLQJ DWWLWXGHV WRZDUGV WKH HQYLURQPHQW WKURXJK LPSURYLQJ NQRZOHGJH\u000f GHYHORSLQJ QHFHVVDU\\ VNLOOV DQG WUDQVIRUPLQJ SHUFHSWLRQV DQG EHOLHIV\u0011 ,Q WKH FRXQWU\\¶V VWUDWHJLF GRFXPHQWV\u000f WKH GLUHFWLRQ RI GHYHORSPHQW LV DVVRFLDWHG ZLWK WKH FUHDWLRQ RI OHDUQLQJ RSSRUWXQLWLHV IRU DOO SHRSOH\u000f UHJDUGOHVV RI WKHLU SODFH RI UHVLGHQFH\u000f VRFLDO FODVV\u000f FDSDELOLWLHV\u000f DQG KHDOWK RSSRUWXQLWLHV\u0011 7KH 6WUDWHJ\\ IRU (GXFDWLRQ 'HYHORSPHQW IRU WKH SHULRG XS WR \u0015\u0013\u0016\u0013 LV EHLQJ LPSOHPHQWHG WR LPSURYH WKH TXDOLW\\ DQG DFFHVVLELOLW\\ RI HGXFDWLRQ DV SHU WKH QHHGV RI WKH LQQRYDW...",
+    "gold_labels": [
+      4
+    ],
+    "predicted_labels": [
+      17
+    ],
+    "top_label_scores": [
+      {
+        "label": 17,
+        "score": 0.1047
+      },
+      {
+        "label": 3,
+        "score": 0.0849
+      },
+      {
+        "label": 13,
+        "score": 0.0803
+      },
+      {
+        "label": 7,
+        "score": 0.0705
+      },
+      {
+        "label": 9,
+        "score": 0.0618
+      }
+    ],
+    "top_tokens": [
+      {
+        "token": "translation",
+        "score": 0.093769
+      },
+      {
+        "token": "unofficial",
+        "score": 0.037334
+      },
+      {
+        "token": "ri",
+        "score": 0.025305
+      },
+      {
+        "token": "dq",
+        "score": 0.022705
+      },
+      {
+        "token": "uh",
+        "score": 0.02268
+      },
+      {
+        "token": "ff",
+        "score": 0.022538
+      },
+      {
+        "token": "\\",
+        "score": 0.022361
+      },
+      {
+        "token": "##x",
+        "score": 0.021341
+      },
+      {
+        "token": "\\",
+        "score": 0.020139
+      },
+      {
+        "token": "4",
+        "score": 0.019447
+      },
+      {
+        "token": "q",
+        "score": 0.017824
+      },
+      {
+        "token": "uh",
+        "score": 0.014571
       }
     ],
     "example_quality": "Bad"
