@@ -1,6 +1,6 @@
 # AI4GC-group
 
-Group project for AI for Good Coding course — combining three individual replications into a unified AI solution for sustainable development analysis.
+Group project for AI for Global Challenges course — combining three individual replications into a unified AI solution for sustainable development analysis.
 
 ## Project Structure
 
