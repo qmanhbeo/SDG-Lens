@@ -34,7 +34,7 @@ This repository combines three individual replications from the AI for Global Ch
 ### r_Leo/ (Replication)
 
 - **Data**: Uses same `SDG2025.csv` (byte-for-byte identical)
-- **Code files**: `main.py`, `main_full_paper.py`, `extra_stuffs/1_author_original_refactored.py`
+- **Code files**: `main.py` (171 lines), `main_full_paper.py` (1048 lines), `extra_stuffs/1_author_original_refactored.py`
 - **Structure**: Modular functions with docstrings
 - **Algorithm**: Implements KMeans clustering, silhouette scoring
 
