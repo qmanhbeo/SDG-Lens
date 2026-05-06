@@ -262,8 +262,8 @@ def labels_to_list(row: np.ndarray) -> list[int]:
     return [idx + 1 for idx, value in enumerate(row.tolist()) if int(value) == 1]
 
 
-def coverage_sample(frame: pd.DataFrame, n_rows: int, seed: int) -> pd.DataFrame:
-    if n_rows <= 0 or n_rows >= len(frame):
+def coverage_sample(frame: pd.DataFrame, n_rows: int | None, seed: int) -> pd.DataFrame:
+    if n_rows is None or n_rows <= 0 or n_rows >= len(frame):
         return frame.sample(frac=1.0, random_state=seed).reset_index(drop=True)
 
     rng = random.Random(seed)
