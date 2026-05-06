@@ -201,7 +201,7 @@ def _add_sweep_args(p: argparse.ArgumentParser) -> None:
     )
     p.add_argument(
         "--test-samples", type=int, default=None,
-        help="Number of test samples; omit for full test set (default: full).",
+        help="Number of test samples (default: 1470, full test set).",
     )
     p.add_argument(
         "--test-seed", type=int, default=43,
@@ -240,7 +240,7 @@ def _add_train_args(p: argparse.ArgumentParser) -> None:
     )
     p.add_argument(
         "--test-samples", type=int, default=None,
-        help="Number of test samples; omit for full test set (default: full).",
+        help="Number of test samples (default: 1470, full test set).",
     )
     p.add_argument(
         "--test-seed", type=int, default=43,
@@ -320,7 +320,7 @@ def _add_baseline_args(p: argparse.ArgumentParser) -> None:
     )
     p.add_argument(
         "--test-samples", type=int, default=None,
-        help="Number of test samples; omit for full test set (default: full).",
+        help="Number of test samples (default: 1470, full test set).",
     )
     p.add_argument(
         "--test-seed", type=int, default=43,

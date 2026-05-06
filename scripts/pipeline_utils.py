@@ -18,7 +18,7 @@ JOB_STATUS_DIR = ARTIFACTS_DIR / "job_status"
 SEEDS = [42, 43, 44]
 TRAIN_SIZES = [2000, 4000]
 TEST_SEED = 43
-TEST_SAMPLES = None
+TEST_SAMPLES = 1470
 
 
 def now_iso() -> str:

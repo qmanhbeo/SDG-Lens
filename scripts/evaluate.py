@@ -95,7 +95,7 @@ def evaluate_tfidf(meta: dict[str, Any]) -> dict[str, Any]:
     language = str(meta.get("language", "en"))
     seed = int(meta["seed"])
     test_seed = int(meta.get("test_seed", TEST_SEED))
-    test_samples = int(meta.get("test_samples", TEST_SAMPLES or 300))
+    test_samples = int(meta.get("test_samples", TEST_SAMPLES or 1470))
     _, test_df = baseline.load_sdgi_parquet(DATA_DIR, language, seed, test_seed)
     test_df = test_df.head(test_samples)
     x_test_texts = np.asarray([baseline.preprocess_text(text) for text in test_df["text"]], dtype=object)

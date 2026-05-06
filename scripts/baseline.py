@@ -288,7 +288,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seeds", nargs="+", type=int, default=SEEDS)
     parser.add_argument("--train-sizes", nargs="+", type=int, default=TRAIN_SIZES)
     parser.add_argument("--language", choices=["en", "es", "fr", "all"], default="en")
-    parser.add_argument("--test-samples", type=int, default=None, help="Number of test samples; omit or pass 0 for full test set (default: full test set).")
+    parser.add_argument("--test-samples", type=int, default=TEST_SAMPLES, help="Number of test samples (default: 1470, full test set).")
     parser.add_argument("--test-seed", type=int, default=TEST_SEED)
     parser.add_argument("--max-features", type=int, default=10000)
     parser.add_argument("--alpha", type=float, default=1e-4)

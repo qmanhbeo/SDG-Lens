@@ -38,7 +38,7 @@ PROJECT_ROOT = HERE.parent
 DEFAULT_DATA_DIR = PROJECT_ROOT / "data"
 
 TRAIN_LIMIT = 2000
-TEST_LIMIT = None
+TEST_LIMIT = 1470
 DEFAULT_EPOCHS = 3
 DEFAULT_THRESHOLD = 0.3
 TRAINABLE_ENCODER_LAYERS = 2
@@ -262,8 +262,8 @@ def labels_to_list(row: np.ndarray) -> list[int]:
     return [idx + 1 for idx, value in enumerate(row.tolist()) if int(value) == 1]
 
 
-def coverage_sample(frame: pd.DataFrame, n_rows: int | None, seed: int) -> pd.DataFrame:
-    if n_rows is None or n_rows <= 0 or n_rows >= len(frame):
+def coverage_sample(frame: pd.DataFrame, n_rows: int, seed: int) -> pd.DataFrame:
+    if n_rows <= 0 or n_rows >= len(frame):
         return frame.sample(frac=1.0, random_state=seed).reset_index(drop=True)
 
     rng = random.Random(seed)
@@ -744,7 +744,7 @@ def build_model_parser() -> argparse.ArgumentParser:
     parser.add_argument("--allow_download", action="store_true")
     parser.add_argument("--language", choices=["en", "es", "fr", "all"], default="en")
     parser.add_argument("--train_samples", type=int, default=TRAIN_LIMIT)
-    parser.add_argument("--test_samples", type=int, default=TEST_LIMIT)
+    parser.add_argument("--test_samples", type=int, default=TEST_LIMIT, help="Number of test samples (default: 1470, full test set).")
     parser.add_argument("--epochs", type=int, default=DEFAULT_EPOCHS)
     parser.add_argument("--batch_size", type=int, default=8)
     parser.add_argument("--max_length", type=int, default=128)
