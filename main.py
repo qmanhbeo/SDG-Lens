@@ -72,44 +72,6 @@ def stage_command(script_name: str, args: argparse.Namespace) -> list[str]:
             command.extend(["--test-samples", str(v)])
         if (v := getattr(args, "test_seed", None)) is not None:
             command.extend(["--test-seed", str(v)])
-        if (v := getattr(args, "epochs", None)) is not None:
-            command.extend(["--epochs", str(v)])
-        if (v := getattr(args, "batch_size", None)) is not None:
-            command.extend(["--batch-size", str(v)])
-        if (v := getattr(args, "max_length", None)) is not None:
-            command.extend(["--max-length", str(v)])
-        if (v := getattr(args, "learning_rate", None)) is not None:
-            command.extend(["--learning-rate", str(v)])
-        if (v := getattr(args, "threshold", None)) is not None:
-            command.extend(["--threshold", str(v)])
-        if (v := getattr(args, "examples", None)) is not None:
-            command.extend(["--examples", str(v)])
-        if (v := getattr(args, "top_tokens", None)) is not None:
-            command.extend(["--top-tokens", str(v)])
-        if (v := getattr(args, "device", None)) is not None:
-            command.extend(["--device", v])
-        if (v := getattr(args, "trainable_encoder_layers", None)) is not None:
-            command.extend(["--trainable-encoder-layers", str(v)])
-        if getattr(args, "unfreeze_encoder", False):
-            command.append("--unfreeze-encoder")
-        if getattr(args, "allow_download", False):
-            command.append("--allow-download")
-        if getattr(args, "force", False):
-            command.append("--force")
-        if (v := getattr(args, "model_name", None)) is not None:
-            command.extend(["--model-name", v])
-
-    elif script_name == "baseline.py":
-        for val in getattr(args, "seeds", SEEDS_DEFAULT) or []:
-            command.extend(["--seeds", str(val)])
-        for val in getattr(args, "train_sizes", TRAIN_SIZES_DEFAULT) or []:
-            command.extend(["--train-sizes", str(val)])
-        if (v := getattr(args, "language", None)) is not None:
-            command.extend(["--language", v])
-        if (v := getattr(args, "test_samples", None)) is not None:
-            command.extend(["--test-samples", str(v)])
-        if (v := getattr(args, "test_seed", None)) is not None:
-            command.extend(["--test-seed", str(v)])
         if (v := getattr(args, "max_features", None)) is not None:
             command.extend(["--max-features", str(v)])
         if (v := getattr(args, "alpha", None)) is not None:
