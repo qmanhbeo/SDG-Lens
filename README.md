@@ -82,7 +82,7 @@ The JSON contains `run_config`, `metrics`, `examples`, and a backward-compatible
 include token-level rationale ground truth, so these explanations are not
 validated rationales.
 
-Install dependencies in a fresh environment:
+Install dependencies in a fresh environment (Python 3.10–3.12, conda/venv recommended):
 
 ```bash
 pip install -r requirements.txt
