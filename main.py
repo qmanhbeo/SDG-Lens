@@ -48,15 +48,30 @@ def cmd_sweep(args: argparse.Namespace) -> int:
     return 0
 
 
+def add_shared_args(subparser: argparse.ArgumentParser) -> None:
+    subparser.add_argument("--device", default="cuda")
+    subparser.add_argument("--allow-download", action="store_true")
+    subparser.add_argument("--force", action="store_true")
+    subparser.add_argument("--dry-run", action="store_true")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Marker-facing SDG Lens pipeline orchestrator.")
     subparsers = parser.add_subparsers(dest="command", required=True)
-    sweep = subparsers.add_parser("sweep", help="Run train, baseline, evaluate, visualize, and manuscript compile stages.")
-    sweep.add_argument("--device", default="cuda")
-    sweep.add_argument("--allow-download", action="store_true")
-    sweep.add_argument("--force", action="store_true", help="Retrain model artifacts instead of reusing complete artifacts.")
-    sweep.add_argument("--dry-run", action="store_true", help="Print and validate stages without training or writing final outputs.")
+    sweep = subparsers.add_parser("sweep", help="Run all stages in order.")
+    add_shared_args(sweep)
     sweep.set_defaults(func=cmd_sweep)
+
+    for label, script_name, help_text in [
+        ("train", "train.py", "Train BERT artifacts."),
+        ("baseline", "baseline.py", "Train TF-IDF artifacts."),
+        ("evaluate", "evaluate.py", "Evaluate artifacts."),
+        ("visualize", "visualize.py", "Generate tables and charts."),
+        ("compile", "compile_manuscript.py", "Compile manuscript to PDF."),
+    ]:
+        sub = subparsers.add_parser(label, help=help_text)
+        add_shared_args(sub)
+        sub.set_defaults(func=lambda a, l=label, s=script_name: (run_stage(l, s, a), 0)[1])
     return parser
 
 
