@@ -52,7 +52,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Marker-facing SDG Lens pipeline orchestrator.")
     subparsers = parser.add_subparsers(dest="command", required=True)
     sweep = subparsers.add_parser("sweep", help="Run train, baseline, evaluate, visualize, and manuscript compile stages.")
-    sweep.add_argument("--device", default="cpu")
+    sweep.add_argument("--device", default="cuda")
     sweep.add_argument("--allow-download", action="store_true")
     sweep.add_argument("--force", action="store_true", help="Retrain model artifacts instead of reusing complete artifacts.")
     sweep.add_argument("--dry-run", action="store_true", help="Print and validate stages without training or writing final outputs.")

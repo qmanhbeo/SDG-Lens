@@ -193,7 +193,7 @@ def write_markdown(path, summary_rows: list[dict[str, Any]]) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Evaluate trained SDG Lens artifacts.")
-    parser.add_argument("--device", default="cpu")
+    parser.add_argument("--device", default="cuda")
     parser.add_argument("--allow-download", action="store_true")
     parser.add_argument("--allow-missing", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
