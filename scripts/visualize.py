@@ -38,32 +38,50 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
 
 
 def write_markdown(path: Path, rows: list[dict[str, Any]]) -> None:
-    lines = [
-        "| Model | Train Size | Seeds | Micro-F1 | Macro-F1 | Weighted-F1 | Subset Acc. |",
-        "|---|---:|---:|---:|---:|---:|---:|",
-    ]
+    has_timing = rows and any(row.get("training_time_seconds_mean") is not None for row in rows)
+    header = "| Model | Train Size | Seeds | Micro-F1 | Macro-F1 | Weighted-F1 | Subset Acc."
+    sep = "|---|---:|---:|---:|---:|---:|---:|"
+    if has_timing:
+        header += " | Train Time (s) |"
+        sep += "---:|"
+    lines = [header, sep]
     for row in rows:
-        lines.append(
-            f"| {row['model_type']} | {row['train_size']} | {row['n_seeds']} | "
+        parts = [
+            f"| {row['model_type']} | {row['train_size']} | {row['n_seeds']} |",
             f"{row['micro_f1_mean_pm_std']} | {row['macro_f1_mean_pm_std']} | "
-            f"{row['weighted_f1_mean_pm_std']} | {row['subset_accuracy_mean_pm_std']} |"
-        )
+            f"{row['weighted_f1_mean_pm_std']} | {row['subset_accuracy_mean_pm_std']} |",
+        ]
+        if has_timing:
+            tt = row.get("training_time_seconds_mean_pm_std", "N/A")
+            parts.append(f" {tt} |")
+        lines.append("".join(parts))
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def write_latex_table(path: Path, rows: list[dict[str, Any]]) -> None:
+    has_timing = rows and any(row.get("training_time_seconds_mean") is not None for row in rows)
+    n_cols = 6 if has_timing else 5
+    align = "l" + "r" * n_cols
     lines = [
-        "\\begin{tabular}{llrrrr}",
+        f"\\begin{{tabular}}{{{align}}}",
         "\\toprule",
-        "Model & Train Size & Seeds & Micro-F1 & Macro-F1 & Subset Acc. \\\\",
-        "\\midrule",
+        "Model & Train Size & Seeds & Micro-F1 & Macro-F1 & Subset Acc.",
     ]
+    if has_timing:
+        lines[-1] += " & Train Time (s)"
+    lines[-1] += " \\\\"
+    lines.append("\\midrule")
     for row in rows:
-        lines.append(
-            f"{row['model_type']} & {row['train_size']} & {row['n_seeds']} & "
-            f"{row['micro_f1_mean_pm_std']} & {row['macro_f1_mean_pm_std']} & "
-            f"{row['subset_accuracy_mean_pm_std']} \\\\"
-        )
+        parts = [
+            f"{row['model_type']} & {row['train_size']} & {row['n_seeds']} &",
+            f"{row['micro_f1_mean_pm_std']} & {row['macro_f1_mean_pm_std']} &",
+            f"{row['subset_accuracy_mean_pm_std']}",
+        ]
+        if has_timing:
+            tt = row.get("training_time_seconds_mean_pm_std", "N/A")
+            parts.append(f"& {tt}")
+        parts[-1] += " \\\\"
+        lines.append(" ".join(parts))
     lines.extend(["\\bottomrule", "\\end{tabular}", ""])
     path.write_text("\n".join(lines), encoding="utf-8")
 

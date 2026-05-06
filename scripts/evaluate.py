@@ -118,7 +118,7 @@ def evaluate_tfidf(meta: dict[str, Any]) -> dict[str, Any]:
 
 
 def row_from_metrics(meta: dict[str, Any], metrics: dict[str, Any]) -> dict[str, Any]:
-    return {
+    row = {
         "model_type": meta["model_type"],
         "train_size": int(meta["train_size"]),
         "seed": int(meta["seed"]),
@@ -126,6 +126,10 @@ def row_from_metrics(meta: dict[str, Any], metrics: dict[str, Any]) -> dict[str,
         "artifact_dir": meta["paths"]["artifact_dir"],
         **{name: metrics.get(name) for name in METRIC_NAMES},
     }
+    timing = meta.get("timing", {})
+    if timing:
+        row["training_time_seconds"] = timing.get("training_time_seconds")
+    return row
 
 
 def write_csv(path, rows: list[dict[str, Any]], columns: list[str]) -> None:
@@ -156,6 +160,11 @@ def summarize(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             summary[f"{metric}_mean"] = mean(values)
             summary[f"{metric}_std"] = std(values)
             summary[f"{metric}_mean_pm_std"] = f"{mean(values):.3f} +/- {std(values):.3f}"
+        timing_values = [float(row["training_time_seconds"]) for row in group_rows if row.get("training_time_seconds") is not None]
+        if timing_values:
+            summary["training_time_seconds_mean"] = mean(timing_values)
+            summary["training_time_seconds_std"] = std(timing_values)
+            summary["training_time_seconds_mean_pm_std"] = f"{mean(timing_values):.1f} +/- {std(timing_values):.1f}"
         summary_rows.append(summary)
     return summary_rows
 
@@ -221,6 +230,10 @@ def main() -> int:
     summary_columns = ["model_type", "train_size", "condition", "n_seeds", "seeds"]
     for metric in METRIC_NAMES:
         summary_columns.extend([f"{metric}_mean", f"{metric}_std", f"{metric}_mean_pm_std"])
+    if rows and rows[0].get("training_time_seconds") is not None:
+        by_seed_columns.append("training_time_seconds")
+    if any(row.get("training_time_seconds_mean") is not None for row in summary_rows):
+        summary_columns.extend(["training_time_seconds_mean", "training_time_seconds_std", "training_time_seconds_mean_pm_std"])
     write_csv(RESULTS_DIR / "evaluation_by_seed.csv", rows, by_seed_columns)
     write_csv(RESULTS_DIR / "evaluation_summary.csv", summary_rows, summary_columns)
     write_json(RESULTS_DIR / "evaluation_summary.json", {"by_seed": rows, "summary": summary_rows})

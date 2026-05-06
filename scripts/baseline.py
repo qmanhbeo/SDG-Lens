@@ -5,6 +5,7 @@ import json
 import random
 import re
 import string
+import time as time_module
 import warnings
 from pathlib import Path
 from typing import Any
@@ -117,9 +118,10 @@ def run_tfidf_baseline(
         max_features=max_features,
         binary=True,
     )
-    x_train = vectorizer.fit_transform(x_train_texts)
+    t0 = time_module.perf_counter()
+    vectorizer.fit(x_train_texts)
+    x_train = vectorizer.transform(x_train_texts)
     x_test = vectorizer.transform(x_test_texts)
-
     models = []
     for i in range(17):
         y_col = y_train[:, i]
@@ -139,6 +141,8 @@ def run_tfidf_baseline(
         )
         clf.fit(x_train, y_col)
         models.append(clf)
+    training_time_seconds = time_module.perf_counter() - t0
+    training_time_minutes = training_time_seconds / 60.0
 
     y_train_pred = np.zeros_like(y_train)
     y_test_pred = np.zeros_like(y_test)
@@ -177,6 +181,7 @@ def run_tfidf_baseline(
         "metrics": test_metrics,
         "per_label_f1": per_label_f1,
         "train_metrics": train_metrics,
+        "timing": {"training_time_seconds": training_time_seconds, "training_time_minutes": training_time_minutes},
     }
 
     (output_dir / "results.json").write_text(json.dumps(output, indent=2, ensure_ascii=False))
@@ -188,6 +193,7 @@ def run_tfidf_baseline(
             "run_config": output["run_config"],
             "metrics": test_metrics,
             "per_label_f1": per_label_f1,
+            "timing": {"training_time_seconds": training_time_seconds, "training_time_minutes": training_time_minutes},
         },
         output_dir / "tfidf_model.joblib",
     )
@@ -271,6 +277,7 @@ def train_one(args: argparse.Namespace, train_size: int, seed: int) -> dict[str,
         },
         "metrics": result.get("metrics", {}),
         "run_config": result.get("run_config", {}),
+        "timing": result.get("timing", {}),
     }
     write_json(meta_path, meta)
     return meta

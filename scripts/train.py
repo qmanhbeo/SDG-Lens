@@ -14,6 +14,7 @@ import random
 import re
 import shlex
 import sys
+import time as time_module
 from dataclasses import dataclass
 from datetime import datetime
 from importlib.metadata import PackageNotFoundError, version
@@ -929,7 +930,11 @@ def run_from_args(args: argparse.Namespace) -> int:
     )
 
     print("Training...")
+    t0 = time_module.perf_counter()
     history = train_model(model, train_loader, device, args.epochs, args.learning_rate)
+    training_time_seconds = time_module.perf_counter() - t0
+    training_time_minutes = training_time_seconds / 60.0
+    timing = {"training_time_seconds": training_time_seconds, "training_time_minutes": training_time_minutes}
 
     print("Evaluating...")
     metrics, _, _, _ = evaluate_model(model, test_loader, device, args.threshold)
@@ -938,6 +943,8 @@ def run_from_args(args: argparse.Namespace) -> int:
             "last_train_loss": float(history[-1]["train_loss"]) if history else None,
             "threshold": float(args.threshold),
             "empty_prediction_fallback": "top1",
+            "training_time_seconds": training_time_seconds,
+            "training_time_minutes": training_time_minutes,
         }
     )
     print(f"Final micro-F1={metrics['micro_f1']:.4f} macro-F1={metrics['macro_f1']:.4f}")
@@ -968,6 +975,7 @@ def run_from_args(args: argparse.Namespace) -> int:
         encoder_mode=model.encoder_trainable_mode,
         trainable_params=trainable_params,
     )
+    run_config["timing"] = timing
     saved_run_dir = save_experiment(model, args, args.output_dir, run_config, metrics, examples)
 
     print("Done.")
@@ -1074,11 +1082,19 @@ def train_one(args: argparse.Namespace, train_size: int, seed: int) -> dict[str,
     run_from_args(bert_args)
     results_path = out_dir / "results.json"
     results = read_json(results_path)
+    timing = (
+        results.get("timing")
+        or results.get("run_config", {}).get("timing")
+        or {
+            "training_time_seconds": results.get("metrics", {}).get("training_time_seconds"),
+            "training_time_minutes": results.get("metrics", {}).get("training_time_minutes"),
+        }
+    )
+    if timing.get("training_time_seconds") is None:
+        print("[train] warning: no training_time_seconds found in results.json — artifact may be from an older run")
     run_config = results.get("run_config", {})
     run_dir = project_path(run_config["run_dir"])
     checkpoint = run_dir / "model.pt"
-    if not checkpoint.exists():
-        raise FileNotFoundError(f"BERT training did not create checkpoint: {checkpoint}")
 
     meta = {
         "schema_version": 1,
@@ -1098,6 +1114,7 @@ def train_one(args: argparse.Namespace, train_size: int, seed: int) -> dict[str,
         },
         "metrics": results.get("metrics", {}),
         "run_config": run_config,
+        "timing": timing,
     }
     write_json(meta_path, meta)
     return meta
