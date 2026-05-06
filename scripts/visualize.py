@@ -51,8 +51,8 @@ SDG_LABELS = {
 }
 
 MODEL_DISPLAY_NAMES = {
-    "tfidf": "TF-IDF + LinearSVC",
-    "bert": "BERT (MiniLM)",
+    "tfidf": "TF-IDF",
+    "bert": "BERT",
 }
 
 
