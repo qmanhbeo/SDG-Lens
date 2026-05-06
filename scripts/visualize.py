@@ -146,7 +146,7 @@ def write_latex_table(rows: list[dict[str, Any]]) -> None:
     lines = [
         f"\\begin{{tabular}}{{{align}}}",
         "\\toprule",
-        "Model & Train Size & Micro-F1 & Macro-F1 & Subset",
+        "Model & Train Size & Micro-F1 & Macro-F1 & Subset Acc.",
     ]
     if has_timing:
         lines[-1] += " & Train Time"
@@ -171,7 +171,7 @@ def write_latex_table(rows: list[dict[str, Any]]) -> None:
 
 def write_markdown_table(rows: list[dict[str, Any]]) -> None:
     has_timing = rows and any(row.get("training_time_seconds_mean") is not None for row in rows)
-    header = "| Model | Train Size | Micro-F1 | Macro-F1 | Weighted-F1 | Subset"
+    header = "| Model | Train Size | Micro-F1 | Macro-F1 | Weighted-F1 | Subset Acc."
     sep = "|---|---:|---:|---:|---:|---:|"
     if has_timing:
         header += " | Train Time |"
