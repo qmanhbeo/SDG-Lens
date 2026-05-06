@@ -1,0 +1,63 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{parskip}
+
+\title{SDG Lens: Explainable Multi-Label Classification of Sustainable Development Goals}
+\author{AI for Global Challenges}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+SDG Lens classifies text from the SDGi corpus into the 17 United Nations
+Sustainable Development Goals. The marker-facing pipeline trains a MiniLM-based
+multi-label neural model and a TF--IDF baseline over three random seeds and two
+training-set sizes, evaluates all artifacts on a fixed held-out test sample, and
+reports mean and standard deviation across seeds.
+\end{abstract}
+
+\section{Pipeline}
+
+The full reproducible command is:
+
+\begin{verbatim}
+python main.py sweep
+\end{verbatim}
+
+The pipeline writes trained artifacts to \texttt{artifacts/}, evaluation results
+to \texttt{results/}, manuscript-ready charts and tables to \texttt{outputs/},
+and this compiled PDF to \texttt{manuscript/}.
+
+\section{Evaluation Results}
+
+\begin{table}[htbp]
+\centering
+\caption{Mean $\pm$ standard deviation over seeds 42, 43, and 44.}
+\input{../outputs/tables/evaluation_summary_table.tex}
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.9\textwidth]{../outputs/charts/model_comparison_micro_f1.png}
+\caption{Micro-F1 by model type and training size. Error bars show standard deviation over seeds.}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.9\textwidth]{../outputs/charts/model_comparison_macro_f1.png}
+\caption{Macro-F1 by model type and training size. Error bars show standard deviation over seeds.}
+\end{figure}
+
+\section{Interpretability Note}
+
+The neural model records attention-based token examples as a proxy explanation.
+These should be interpreted as inspection aids rather than validated human
+rationales because the SDGi corpus provides document-level SDG labels, not
+token-level rationale annotations.
+
+\end{document}

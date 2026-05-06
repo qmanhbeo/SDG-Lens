@@ -1,70 +1,89 @@
-# AI4GC-group
+# Solution 1: SDG Text Explainability
 
-Final assignment for the AI for Global Challenges course.
+Minimal prototype for SDGi multi-label classification with an attention-based
+explanation proxy adapted from the HateXplain approach.
 
-## Assignment Overview
+This directory is a standalone copy of SDG Lens. It contains its own scripts,
+local SDGi parquet data under `data/`, and saved pipeline products under
+`artifacts/`, `results/`, `outputs/`, and `manuscript/`.
 
-This repository contains **SDG Lens** — a unified solution that classifies UN/UNDP articles against all 17 Sustainable Development Goals (SDGs) and provides explainable predictions.
+The root `main.py` is the marker-facing entrypoint. Stage implementations live
+under `scripts/`, but the public command surface is the normal project command:
+`python main.py ...`.
 
-The final solution integrates techniques from three reference implementations:
+The pipeline:
 
-| Reference | Contribution | Key Technique |
-|-----------|--------------|---------------|
-| `r_Leo/` | SDG benchmarking & clustering | KMeans on country-level SDG scores |
-| `r_Ting/` | Multi-label classification | TF-IDF + LinearSVC baseline |
-| `r_Aiden/` | Explainability | BERT with attention-based rationales |
+- loads local SDGi parquet data from `data/`
+- trains a small BERT-family multi-label classifier for 17 SDG labels
+- trains a TF-IDF linear baseline
+- computes micro-F1 and macro-F1
+- extracts top attended tokens from last-layer CLS attention
+- saves trained artifacts and metadata under `artifacts/`
+- writes aggregate evaluation summaries under `results/`
 
-These reference implementations serve as the **foundation for the unified solution** in `solution1_sdg_lens/`. They are not the final deliverable.
+Check the local data:
 
----
-
-## What We Have
-
-### Datasets
-
-| Dataset | Description | Size |
-|---------|-------------|------|
-| `GSP/` | Country-level SDG index scores | ~12KB |
-| `SDGi/` | UNDP SDG articles with 17 labels | ~130MB |
-| `HateXplain/` | Hate speech with rationales | ~12MB |
-
-### Pipelines
-
-Three working pipelines ready for use:
-
-- `r_Leo/`: KMeans clustering on country-level SDG scores
-- `r_Ting/`: TF-IDF + linear classifier for SDG classification
-- `r_Aiden/`: BERT-based classifier with attention for explainability
-
-### Models
-
-Pre-trained models and trained checkpoints available in each replication folder.
-
----
-
-## Final Solution
-
-The unified solution is in `solution1_sdg_lens/`:
-
-- `run.py` — Main pipeline: TF-IDF baseline → MiniLM fine-tuning → multi-label classification with attention explanations
-- `outputs/` — Trained models, predictions, and evaluation results
-- `sdg_lens_team_brief.pdf` — Team deliverable with methodology and findings
-
-Run the solution:
 ```bash
-cd solution1_sdg_lens && python run.py
+cd SDG_Lens
+python main.py sweep --dry-run
 ```
 
----
+Run the full marker-facing pipeline:
 
-## Reference Implementations
+```bash
+python main.py sweep
+```
 
-The three folders below are reference implementations (not the final deliverable):
+The sweep runs:
 
-| Folder | Description |
-|--------|-------------|
-| `r_Leo/` | Country-level SDG clustering (KMeans) |
-| `r_Ting/` | SDGi multi-label classification (TF-IDF + linear) |
-| `r_Aiden/` | HateXplain explainability (BERT + attention) |
+1. `scripts/train.py` for BERT artifacts
+2. `scripts/baseline.py` for TF-IDF artifacts
+3. `scripts/evaluate.py` for mean/std results
+4. `scripts/visualize.py` for manuscript-ready tables and charts
+5. `scripts/compile_manuscript.py` for the final PDF
 
-Each contains its own trained models and replication notes in `notes/replication_notes.md`.
+The default sweep trains BERT and TF-IDF sequentially for training sizes `2000`
+and `4000` across training seeds `42`, `43`, and `44`, while holding the test
+sampling seed fixed at `43`.
+
+To rerun training instead of reusing complete artifacts:
+
+```bash
+python main.py sweep --force
+```
+
+Outputs:
+
+```text
+artifacts/
+├── bert_train2000_seed42/
+├── bert_train4000_seed44/
+├── tfidf_train2000_seed42/
+└── tfidf_train4000_seed44/
+results/
+├── evaluation_by_seed.csv
+├── evaluation_summary.csv
+├── evaluation_summary.json
+└── evaluation_summary.md
+outputs/
+├── charts/
+└── tables/
+manuscript/
+├── sdg_lens_manuscript.tex
+└── sdg_lens_manuscript.pdf
+artifacts/job_status/*.json
+```
+
+Each baseline artifact saves `results.json` plus `tfidf_model.joblib`. Each BERT
+artifact saves a checkpoint, metrics, examples, and `artifact.json` metadata.
+
+The JSON contains `run_config`, `metrics`, `examples`, and a backward-compatible
+`metadata` alias. Attention scores are explanation proxies only; SDGi does not
+include token-level rationale ground truth, so these explanations are not
+validated rationales.
+
+Install dependencies in a fresh environment:
+
+```bash
+pip install -r requirements.txt
+```

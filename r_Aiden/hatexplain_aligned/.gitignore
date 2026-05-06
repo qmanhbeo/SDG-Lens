@@ -1,9 +1,0 @@
-__pycache__/
-*.pyc
-.venv/
-.env
-outputs/checkpoints/
-outputs/*.pt
-outputs/*.bin
-outputs/*.log
-data/raw/

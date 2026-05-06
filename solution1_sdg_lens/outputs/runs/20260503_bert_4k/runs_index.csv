@@ -1,2 +1,0 @@
-run_id,timestamp,model_name,train_limit,test_limit,epochs,threshold,unfrozen_layers,seed,micro_f1,macro_f1,average_predicted_labels,run_dir
-20260503_150722,20260503_150722,sentence-transformers/all-MiniLM-L6-v2,4000,300,3,0.3,2,42,0.7049180327868853,0.6868580479997828,1.6233333333333333,outputs/runs/20260503_bert_4k/runs/20260503_150722
