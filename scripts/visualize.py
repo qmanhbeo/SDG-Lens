@@ -273,8 +273,8 @@ def save_examples_figure(examples: list[dict[str, Any]], out_dir: Path, n_exampl
     fig, axes = plt.subplots(
         nrows=len(picked),
         ncols=3,
-        figsize=(15, 17),
-        dpi=220,
+        figsize=(15, 19),
+        dpi=200,
         gridspec_kw={"width_ratios": [1.65, 1.55, 1.55]},
     )
     if len(picked) == 1:
@@ -291,11 +291,11 @@ def save_examples_figure(examples: list[dict[str, Any]], out_dir: Path, n_exampl
         pred = ", ".join(str(int(l)) for l in (example.get("predicted_labels", []) or [])) or "none"
         quality = example.get("example_quality")
         title = f"Example {row_idx}" + (f" ({quality})" if quality else "")
-        excerpt = wrap_text(shorten_text(example.get("text", ""), max_chars=180), width=38)
+        excerpt = wrap_text(shorten_text(example.get("text", ""), max_chars=180), width=36)
         text_ax.axis("off")
         text_ax.text(
             0.0, 1.0, f"{title}\nGold: {gold}\nPred: {pred}\n\n{excerpt}",
-            ha="left", va="top", fontsize=8.0, linespacing=1.12, transform=text_ax.transAxes,
+            ha="left", va="top", fontsize=9.5, linespacing=1.15, transform=text_ax.transAxes,
         )
 
         label_scores = list(example.get("top_label_scores", []))[:5]
@@ -307,11 +307,11 @@ def save_examples_figure(examples: list[dict[str, Any]], out_dir: Path, n_exampl
         scores_ax.set_xlim(0, 1.0)
         scores_ax.invert_yaxis()
         if row_idx == 1:
-            scores_ax.set_title("Top label scores", fontsize=9)
+            scores_ax.set_title("Top label scores", fontsize=10)
         scores_ax.grid(axis="x", alpha=0.25)
-        scores_ax.tick_params(axis="both", labelsize=7)
+        scores_ax.tick_params(axis="both", labelsize=8)
         for y_pos, value in zip(score_y, score_values):
-            scores_ax.text(min(value + 0.015, 0.97), y_pos, f"{value:.2f}", va="center", fontsize=6.8)
+            scores_ax.text(min(value + 0.015, 0.97), y_pos, f"{value:.2f}", va="center", fontsize=7.8)
 
         top_tokens = list(example.get("top_tokens", []))[:5]
         token_names = [truncate_token(item["token"]) for item in top_tokens]
@@ -323,22 +323,22 @@ def save_examples_figure(examples: list[dict[str, Any]], out_dir: Path, n_exampl
         tokens_ax.set_xlim(0, max_score * 1.25)
         tokens_ax.invert_yaxis()
         if row_idx == 1:
-            tokens_ax.set_title("Top attended tokens", fontsize=9)
+            tokens_ax.set_title("Top attended tokens", fontsize=10)
         tokens_ax.grid(axis="x", alpha=0.25)
-        tokens_ax.tick_params(axis="both", labelsize=7)
+        tokens_ax.tick_params(axis="both", labelsize=8)
         for y_pos, value in zip(token_y, token_scores):
-            tokens_ax.text(value + max_score * 0.02, y_pos, f"{value:.3f}", va="center", fontsize=6.8)
+            tokens_ax.text(value + max_score * 0.02, y_pos, f"{value:.3f}", va="center", fontsize=7.8)
 
     fig.suptitle(
         "SDG Lens: Five Held-Out Explanation Examples\n"
         "Attention is a proxy explanation, not a validated rationale.",
-        fontsize=13.5,
+        fontsize=14.5,
     )
     fig.subplots_adjust(
-        left=0.035, right=0.985, top=0.94, bottom=0.04, wspace=0.20, hspace=0.38,
+        left=0.035, right=0.985, top=0.94, bottom=0.04, wspace=0.20, hspace=0.40,
     )
     path = out_dir / "fig_explanation_examples.png"
-    fig.savefig(path, dpi=220)
+    fig.savefig(path, dpi=200)
     plt.close(fig)
     return path
 
