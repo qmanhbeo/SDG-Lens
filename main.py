@@ -10,8 +10,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent
 SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 
-TRAIN_SIZES_DEFAULT = [2000, 4000]
-SEEDS_DEFAULT = [42, 43, 44]
+TRAIN_SIZES_DEFAULT = [1000, 2000, 4000]
+SEEDS_DEFAULT = [42, 43, 44, 45, 46]
 
 
 def stage_command(script_name: str, args: argparse.Namespace) -> list[str]:
