@@ -30,8 +30,8 @@ from pipeline_utils import (
     write_status,
 )
 
-import run as bert_run
-import tfidf_baseline
+import baseline
+import train as bert_run
 
 
 METRIC_NAMES = ["micro_f1", "macro_f1", "weighted_f1", "subset_accuracy"]
@@ -96,9 +96,9 @@ def evaluate_tfidf(meta: dict[str, Any]) -> dict[str, Any]:
     seed = int(meta["seed"])
     test_seed = int(meta.get("test_seed", TEST_SEED))
     test_samples = int(meta.get("test_samples", TEST_SAMPLES))
-    _, test_df = tfidf_baseline.load_sdgi_parquet(DATA_DIR, language, seed, test_seed)
+    _, test_df = baseline.load_sdgi_parquet(DATA_DIR, language, seed, test_seed)
     test_df = test_df.head(test_samples)
-    x_test_texts = np.asarray([tfidf_baseline.preprocess_text(text) for text in test_df["text"]], dtype=object)
+    x_test_texts = np.asarray([baseline.preprocess_text(text) for text in test_df["text"]], dtype=object)
     y_test = model_payload["binarizer"].transform(test_df["labels"].tolist())
     x_test = model_payload["vectorizer"].transform(x_test_texts)
 
@@ -109,10 +109,10 @@ def evaluate_tfidf(meta: dict[str, Any]) -> dict[str, Any]:
         else:
             y_pred[:, idx] = clf.predict(x_test)
 
-    metrics = tfidf_baseline.evaluate_predictions(y_test, y_pred)
+    metrics = baseline.evaluate_predictions(y_test, y_pred)
     metrics["per_label_f1"] = {
         str(label): float(score)
-        for label, score in zip(tfidf_baseline.SDG_IDS, f1_score(y_test, y_pred, average=None, zero_division=0).tolist())
+        for label, score in zip(baseline.SDG_IDS, f1_score(y_test, y_pred, average=None, zero_division=0).tolist())
     }
     return metrics
 

@@ -7,9 +7,8 @@ This directory is a standalone copy of SDG Lens. It contains its own scripts,
 local SDGi parquet data under `data/`, and saved outputs under `outputs/`.
 
 `scripts/main.py` is the marker-facing entrypoint. The root `main.py` is only a
-compatibility wrapper. The other Python files are kept as internal modules so
-the implementation stays inspectable instead of becoming one large mixed-purpose
-script.
+compatibility wrapper. All pipeline code lives under `scripts/` so the root
+folder stays submission-clean.
 
 The pipeline:
 
