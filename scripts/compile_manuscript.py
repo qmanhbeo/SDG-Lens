@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import shutil
 import subprocess
+from pathlib import Path
 
 from pipeline_utils import MANUSCRIPT_DIR, ensure_base_dirs, rel_path, write_status
 
@@ -13,6 +14,26 @@ REQUIRED_VIZ = [
     MANUSCRIPT_DIR / "visualization" / "charts" / "model_comparison_micro_f1.png",
     MANUSCRIPT_DIR / "visualization" / "charts" / "model_comparison_macro_f1.png",
 ]
+LATEX_TEMP_SUFFIXES = {
+    ".aux", ".log", ".out", ".toc", ".fls",
+    ".fdb_latexmk", ".nav", ".snm", ".bbl", ".blg",
+    ".synctex.gz", ".ind", ".idx", ".loe", ".lof",
+    ".lot", ".nlo", ".nls", ".pla", ".ps",
+    ".tcp", ".tpt", ".trc",
+}
+LOG_FILES = {"compile_stdout.log", "compile_stderr.log"}
+
+
+def cleanup_latex_artifacts(manuscript_dir: Path) -> list[str]:
+    deleted: list[str] = []
+    keep_dirs = {"visualization"}
+    for path in manuscript_dir.iterdir():
+        if path.is_dir():
+            continue
+        if path.suffix in LATEX_TEMP_SUFFIXES or path.name in LOG_FILES:
+            path.unlink()
+            deleted.append(rel_path(path))
+    return deleted
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -44,12 +65,14 @@ def main() -> int:
     command = [pdflatex, "-interaction=nonstopmode", "-halt-on-error", tex_path.name]
     stdout_log = MANUSCRIPT_DIR / "compile_stdout.log"
     stderr_log = MANUSCRIPT_DIR / "compile_stderr.log"
+    failed = False
     for pass_idx in (1, 2):
         print(f"[compile] pdflatex pass {pass_idx}")
         result = subprocess.run(command, cwd=MANUSCRIPT_DIR, text=True, capture_output=True)
         stdout_log.write_text(result.stdout, encoding="utf-8")
         stderr_log.write_text(result.stderr, encoding="utf-8")
         if result.returncode != 0:
+            failed = True
             tail = "\n".join(result.stdout.splitlines()[-20:])
             raise RuntimeError(
                 f"LaTeX compilation failed on pass {pass_idx}. "
@@ -61,6 +84,10 @@ def main() -> int:
         raise FileNotFoundError(f"LaTeX completed but did not produce PDF: {pdf_path}")
     write_status("compile_manuscript", "completed", "latex", pdf=rel_path(pdf_path), log=rel_path(stdout_log))
     print(f"[compile] wrote {rel_path(pdf_path)}")
+
+    deleted = cleanup_latex_artifacts(MANUSCRIPT_DIR)
+    for path in deleted:
+        print(f"[compile] cleaned {path}")
     return 0
 
 
