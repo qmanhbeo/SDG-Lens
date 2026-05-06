@@ -1,0 +1,584 @@
+[
+  {
+    "text": "23 Goal 9 Industry, Innovation and Infrastructure Toyama City is an industrial hub and home to many businesses. However, the number of younger residents departing the city for higher education or for work has exceeded those who join as residents. To generate stable employment, Toyama needs to implement a growth strategy that would develop new markets and attract businesses with strong potential. Toyama City is making efforts to transition to a city of commerce, services, and culture and recognized for its sound infrastructure. SDG target Toyama Indicator Past Last Plan 9.1 Develop sustainable, resilient and inclusive infrastructure Proportion of aseismic distributing water pipes 42％ （2016...",
+    "gold_labels": [
+      9
+    ],
+    "predicted_labels": [
+      9
+    ],
+    "top_label_scores": [
+      {
+        "label": 9,
+        "score": 0.9414
+      },
+      {
+        "label": 11,
+        "score": 0.131
+      },
+      {
+        "label": 8,
+        "score": 0.1199
+      },
+      {
+        "label": 17,
+        "score": 0.0804
+      },
+      {
+        "label": 7,
+        "score": 0.0672
+      }
+    ],
+    "top_tokens": [
+      {
+        "token": "infrastructure",
+        "score": 0.127513
+      },
+      {
+        "token": "innovation",
+        "score": 0.102469
+      },
+      {
+        "token": "industry",
+        "score": 0.086499
+      },
+      {
+        "token": "industrial",
+        "score": 0.077024
+      },
+      {
+        "token": "infrastructure",
+        "score": 0.061893
+      },
+      {
+        "token": "9",
+        "score": 0.055457
+      },
+      {
+        "token": "goal",
+        "score": 0.036199
+      },
+      {
+        "token": "infrastructure",
+        "score": 0.030044
+      },
+      {
+        "token": "businesses",
+        "score": 0.026707
+      },
+      {
+        "token": "employment",
+        "score": 0.016456
+      },
+      {
+        "token": "growth",
+        "score": 0.015661
+      },
+      {
+        "token": "hub",
+        "score": 0.015428
+      }
+    ],
+    "example_quality": "Good"
+  },
+  {
+    "text": "56 Voluntary National Review of Turkmenistan peace, jusTIce and 16 sTrong InsTITuTes Voluntary National Review of Turkmenistan 57 Turkmenistan pays special attention to the creation of the conditions necessary for building democratic and inclusive society, which is based on the rule of law and accountability of institutions at all levels to ensure basic human freedoms. To achieve this, the government is implementing the reform of national human rights protection system by carrying out activities focused on strengthening democratic principles in society, legal framework of the State and development of civil society. Turkmenistan has been an active member of the Executive Committee of the U...",
+    "gold_labels": [
+      16
+    ],
+    "predicted_labels": [
+      16
+    ],
+    "top_label_scores": [
+      {
+        "label": 16,
+        "score": 0.7571
+      },
+      {
+        "label": 10,
+        "score": 0.1142
+      },
+      {
+        "label": 17,
+        "score": 0.0776
+      },
+      {
+        "label": 1,
+        "score": 0.0597
+      },
+      {
+        "label": 5,
+        "score": 0.0583
+      }
+    ],
+    "top_tokens": [
+      {
+        "token": "peace",
+        "score": 0.210311
+      },
+      {
+        "token": "democratic",
+        "score": 0.074722
+      },
+      {
+        "token": "justice",
+        "score": 0.053525
+      },
+      {
+        "token": "refugees",
+        "score": 0.032698
+      },
+      {
+        "token": "16",
+        "score": 0.030455
+      },
+      {
+        "token": "democratic",
+        "score": 0.029218
+      },
+      {
+        "token": "society",
+        "score": 0.028435
+      },
+      {
+        "token": "inclusive",
+        "score": 0.027869
+      },
+      {
+        "token": "gender",
+        "score": 0.022803
+      },
+      {
+        "token": "rights",
+        "score": 0.022522
+      },
+      {
+        "token": "voluntary",
+        "score": 0.019929
+      },
+      {
+        "token": "turkmenistan",
+        "score": 0.018552
+      }
+    ],
+    "example_quality": "Good"
+  },
+  {
+    "text": "34 GUIDELINES  Ensure access to housing and services for all and increase social diversity in cities  Establish shared governance for collective construction of the urban environment  Strengthen the sustainability of cities and preserve the architectural heritage  Encourage urban resilience by enhancing risk prevention  Encourage the emergence of innovations and develop smart cities  Internationally, encourage inclusive, sound and resilient urban development ISSUES AND ACTIONS IN FRANCE At a time when cities are continuing to grow rapidly by expanding towards peripheral areas, the development of more sustainable cities is a major challenge in order to improve residents’ quality of l...",
+    "gold_labels": [
+      11
+    ],
+    "predicted_labels": [
+      11
+    ],
+    "top_label_scores": [
+      {
+        "label": 11,
+        "score": 0.9469
+      },
+      {
+        "label": 9,
+        "score": 0.1726
+      },
+      {
+        "label": 10,
+        "score": 0.15
+      },
+      {
+        "label": 13,
+        "score": 0.1462
+      },
+      {
+        "label": 17,
+        "score": 0.127
+      }
+    ],
+    "top_tokens": [
+      {
+        "token": "housing",
+        "score": 0.110742
+      },
+      {
+        "token": "urban",
+        "score": 0.064641
+      },
+      {
+        "token": "social",
+        "score": 0.058287
+      },
+      {
+        "token": "diversity",
+        "score": 0.049318
+      },
+      {
+        "token": "cities",
+        "score": 0.042738
+      },
+      {
+        "token": "cities",
+        "score": 0.038522
+      },
+      {
+        "token": "cities",
+        "score": 0.03232
+      },
+      {
+        "token": "##ili",
+        "score": 0.03045
+      },
+      {
+        "token": "urban",
+        "score": 0.029819
+      },
+      {
+        "token": "cities",
+        "score": 0.028769
+      },
+      {
+        "token": "housing",
+        "score": 0.027924
+      },
+      {
+        "token": "urban",
+        "score": 0.027609
+      }
+    ],
+    "example_quality": "Good"
+  },
+  {
+    "text": "77 Responsible procurement and circular economy Responsible procurement reduces negative impacts on people and the environment and promotes positive impacts. The City can also support the creation of responsible markets by leading the way in the devel opment and implementation of new solutions that are energy- and material-efcient and promote the circu lar economy and the preservation of biodiversity. Responsible procurement lays the foundation for a responsible capital city. Helsinki’s annual procure ment volume is approximately four billion euros, making the City the largest operator engaging in public procurement in Finland. Helsinki is commited to promoting environmental, social and e...",
+    "gold_labels": [
+      8,
+      9,
+      12
+    ],
+    "predicted_labels": [
+      8,
+      12,
+      17
+    ],
+    "top_label_scores": [
+      {
+        "label": 12,
+        "score": 0.4483
+      },
+      {
+        "label": 17,
+        "score": 0.4205
+      },
+      {
+        "label": 8,
+        "score": 0.3378
+      },
+      {
+        "label": 9,
+        "score": 0.2957
+      },
+      {
+        "label": 11,
+        "score": 0.1691
+      }
+    ],
+    "top_tokens": [
+      {
+        "token": "procurement",
+        "score": 0.115394
+      },
+      {
+        "token": "procurement",
+        "score": 0.101878
+      },
+      {
+        "token": "economy",
+        "score": 0.093181
+      },
+      {
+        "token": "procurement",
+        "score": 0.056525
+      },
+      {
+        "token": "procurement",
+        "score": 0.038234
+      },
+      {
+        "token": "markets",
+        "score": 0.032451
+      },
+      {
+        "token": "procurement",
+        "score": 0.028545
+      },
+      {
+        "token": "environmental",
+        "score": 0.021718
+      },
+      {
+        "token": "responsible",
+        "score": 0.02108
+      },
+      {
+        "token": "environment",
+        "score": 0.020684
+      },
+      {
+        "token": "biodiversity",
+        "score": 0.019261
+      },
+      {
+        "token": "circular",
+        "score": 0.016958
+      }
+    ],
+    "example_quality": "So-so / partial"
+  },
+  {
+    "text": "CASE STUDY Council’s carbon neutral accreditation Council has taken significant action to achieve net zero greenhouse gas emissions for its operations and has been Australia’s largest carbon neutral government organisation since 2017. Since achieving carbon neutral certification, Council has made significant progress in delivering energy efficiency and emissions reduction projects. Energy-efficient lighting has been fitted across the city’s streets and other public places as well as Council buildings and facilities. Council’s emissions reduction projects span all facilities and services including integrating electric vehicles into its fleet, diverting waste from landfill, increasing the r...",
+    "gold_labels": [
+      3,
+      7,
+      13
+    ],
+    "predicted_labels": [
+      7,
+      13
+    ],
+    "top_label_scores": [
+      {
+        "label": 13,
+        "score": 0.8507
+      },
+      {
+        "label": 7,
+        "score": 0.763
+      },
+      {
+        "label": 12,
+        "score": 0.2528
+      },
+      {
+        "label": 11,
+        "score": 0.2057
+      },
+      {
+        "label": 9,
+        "score": 0.1944
+      }
+    ],
+    "top_tokens": [
+      {
+        "token": "greenhouse",
+        "score": 0.089398
+      },
+      {
+        "token": "gas",
+        "score": 0.070877
+      },
+      {
+        "token": "emissions",
+        "score": 0.069081
+      },
+      {
+        "token": "carbon",
+        "score": 0.061512
+      },
+      {
+        "token": "lighting",
+        "score": 0.038904
+      },
+      {
+        "token": "carbon",
+        "score": 0.037135
+      },
+      {
+        "token": "emissions",
+        "score": 0.034247
+      },
+      {
+        "token": "carbon",
+        "score": 0.031319
+      },
+      {
+        "token": "energy",
+        "score": 0.030426
+      },
+      {
+        "token": "emissions",
+        "score": 0.023929
+      },
+      {
+        "token": "council",
+        "score": 0.021151
+      },
+      {
+        "token": "accreditation",
+        "score": 0.0169
+      }
+    ],
+    "example_quality": "So-so / partial"
+  },
+  {
+    "text": "Suwon SDGs Action Report Conclusions 5arget \u0016\u000e\u0012\u000f $reating RualitZ Kobs #Z 2030 inDSease the emploZment Sate to \u00180\u0006 anE SeEuDe the pSopoS\u000e tion of tempoSaSZ woSLeSs anE EaZ laboSeSs to \u0012\u0016\u0006 DompaSeE to the enE of 20\u0012\u0017\u000f InEiDatoS \u0016\u000e\u0012\u000e\u0012\u000f &mploZment Sate in Suwon bZ EieSent HSoups suDh as female Zouth aHeE fSom \u0012\u0016 to 2\u001a the miEEle\u000eaHeE fSom \u0015\u0016 to \u00170 the elEeSlZ anE people with Eisabilities \u0016\u000e\u0012\u000e2\u000f 1SopoStion of SeHulaS woSLeSs out of total waHe woSLeSs 5arget \u0016\u000e2\u000f *mprovement of wages and worLing Donditions #Z 2030 inDSease waHe levels of tempoSaSZ woSLeSs to \u00190\u0006 anE those of EaZ laboSeSs to \u00180\u0006 of SeHulaS woSLeSs baseE on the pSinDiple of eRual paZ foS eRual woSL\u000f In aEEition SeEuDe woSLinH h...",
+    "gold_labels": [
+      8,
+      9
+    ],
+    "predicted_labels": [
+      5
+    ],
+    "top_label_scores": [
+      {
+        "label": 5,
+        "score": 0.8566
+      },
+      {
+        "label": 3,
+        "score": 0.0806
+      },
+      {
+        "label": 10,
+        "score": 0.0678
+      },
+      {
+        "label": 4,
+        "score": 0.0626
+      },
+      {
+        "label": 13,
+        "score": 0.0577
+      }
+    ],
+    "top_tokens": [
+      {
+        "token": "female",
+        "score": 0.235362
+      },
+      {
+        "token": "203",
+        "score": 0.031674
+      },
+      {
+        "token": "action",
+        "score": 0.030116
+      },
+      {
+        "token": "##oz",
+        "score": 0.030099
+      },
+      {
+        "token": "tempo",
+        "score": 0.024511
+      },
+      {
+        "token": "ti",
+        "score": 0.02264
+      },
+      {
+        "token": "##0",
+        "score": 0.018944
+      },
+      {
+        "token": "##gs",
+        "score": 0.017863
+      },
+      {
+        "token": "ko",
+        "score": 0.01647
+      },
+      {
+        "token": "ru",
+        "score": 0.015614
+      },
+      {
+        "token": "##bs",
+        "score": 0.013923
+      },
+      {
+        "token": "z",
+        "score": 0.013488
+      }
+    ],
+    "example_quality": "Bad"
+  },
+  {
+    "text": "Unofficial translation \u0018\u0016 \u0016\u0011\u0017\u0011 (QVXULQJ $FFHVVLELOLW\\ DQG 4XDOLW\\ RI (GXFDWLRQ (GXFDWLRQ KDV VLJQLILFDQW SRWHQWLDO WR UHGXFH YXOQHUDELOLWLHV DQG UH\u0010H[DPLQLQJ DWWLWXGHV WRZDUGV WKH HQYLURQPHQW WKURXJK LPSURYLQJ NQRZOHGJH\u000f GHYHORSLQJ QHFHVVDU\\ VNLOOV DQG WUDQVIRUPLQJ SHUFHSWLRQV DQG EHOLHIV\u0011 ,Q WKH FRXQWU\\¶V VWUDWHJLF GRFXPHQWV\u000f WKH GLUHFWLRQ RI GHYHORSPHQW LV DVVRFLDWHG ZLWK WKH FUHDWLRQ RI OHDUQLQJ RSSRUWXQLWLHV IRU DOO SHRSOH\u000f UHJDUGOHVV RI WKHLU SODFH RI UHVLGHQFH\u000f VRFLDO FODVV\u000f FDSDELOLWLHV\u000f DQG KHDOWK RSSRUWXQLWLHV\u0011 7KH 6WUDWHJ\\ IRU (GXFDWLRQ 'HYHORSPHQW IRU WKH SHULRG XS WR \u0015\u0013\u0016\u0013 LV EHLQJ LPSOHPHQWHG WR LPSURYH WKH TXDOLW\\ DQG DFFHVVLELOLW\\ RI HGXFDWLRQ DV SHU WKH QHHGV RI WKH LQQRYDW...",
+    "gold_labels": [
+      4
+    ],
+    "predicted_labels": [
+      17
+    ],
+    "top_label_scores": [
+      {
+        "label": 17,
+        "score": 0.1047
+      },
+      {
+        "label": 3,
+        "score": 0.0849
+      },
+      {
+        "label": 13,
+        "score": 0.0803
+      },
+      {
+        "label": 7,
+        "score": 0.0705
+      },
+      {
+        "label": 9,
+        "score": 0.0618
+      }
+    ],
+    "top_tokens": [
+      {
+        "token": "translation",
+        "score": 0.093769
+      },
+      {
+        "token": "unofficial",
+        "score": 0.037334
+      },
+      {
+        "token": "ri",
+        "score": 0.025305
+      },
+      {
+        "token": "dq",
+        "score": 0.022705
+      },
+      {
+        "token": "uh",
+        "score": 0.02268
+      },
+      {
+        "token": "ff",
+        "score": 0.022538
+      },
+      {
+        "token": "\\",
+        "score": 0.022361
+      },
+      {
+        "token": "##x",
+        "score": 0.021341
+      },
+      {
+        "token": "\\",
+        "score": 0.020139
+      },
+      {
+        "token": "4",
+        "score": 0.019447
+      },
+      {
+        "token": "q",
+        "score": 0.017824
+      },
+      {
+        "token": "uh",
+        "score": 0.014571
+      }
+    ],
+    "example_quality": "Bad"
+  }
+]

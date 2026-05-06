@@ -1,16 +1,20 @@
 # AI4GC-group
 
-A combined repository representing three AI solutions for sustainable development and social good.
+Final assignment for the AI for Global Challenges course.
 
-## What This Repository Represents
+## Assignment Overview
 
-This project brings together three replications from the AI for Global Challenges course. Each replication addresses a different aspect of sustainable development:
+This repository contains **SDG Lens** — a unified solution that classifies UN/UNDP articles against all 17 Sustainable Development Goals (SDGs) and provides explainable predictions.
 
-- **Leo**: SDG benchmarking and clustering analysis
-- **Ting**: Multi-label SDG text classification
-- **Aiden**: Hate speech detection with explainability
+The final solution integrates techniques from three reference implementations:
 
-Together, these provide a foundation for exploring AI applications in sustainable development contexts.
+| Reference | Contribution | Key Technique |
+|-----------|--------------|---------------|
+| `r_Leo/` | SDG benchmarking & clustering | KMeans on country-level SDG scores |
+| `r_Ting/` | Multi-label classification | TF-IDF + LinearSVC baseline |
+| `r_Aiden/` | Explainability | BERT with attention-based rationales |
+
+These reference implementations serve as the **foundation for the unified solution** in `solution1_sdg_lens/`. They are not the final deliverable.
 
 ---
 
@@ -38,59 +42,29 @@ Pre-trained models and trained checkpoints available in each replication folder.
 
 ---
 
-## Possible Directions
+## Final Solution
 
-This is a starting point. Some directions we could explore:
+The unified solution is in `solution1_sdg_lens/`:
 
-### Unified Pipeline
-Combine the three pipelines to go from raw text → classification → benchmarking → explanation.
+- `run.py` — Main pipeline: TF-IDF baseline → MiniLM fine-tuning → multi-label classification with attention explanations
+- `outputs/` — Trained models, predictions, and evaluation results
+- `sdg_lens_team_brief.pdf` — Team deliverable with methodology and findings
 
-### Cross-Dataset Analysis
-Compare how the same model performs across different SDG-related datasets.
-
-### Benchmarking
-Use the HateXplain explainability approach on SDG classification tasks.
-
-### SDG Applications
-Apply hate speech detection techniques to identify harmful content in SDG-related text.
-
----
-
-## Next Steps (Open)
-
-- Review all three pipelines
-- Identify integration points
-- Design combined architecture
-- Extend to new tasks or datasets
-
-The exact path forward is open — let's explore together.
-
----
-
-## Team
-
-- Leo: SDG benchmarking
-- Ting: SDGi classification
-- Aiden: HateXplain explainability
-
----
-
-## Getting Started
-
+Run the solution:
 ```bash
-# Leo's pipeline
-cd r_Leo && python main.py
-
-# Ting's pipeline
-cd r_Ting && python sdgi_replication.py
-
-# Aiden's pipeline
-cd r_Aiden/hatexplain_aligned && python src/run_once.py
+cd solution1_sdg_lens && python run.py
 ```
 
 ---
 
-## Resources
+## Reference Implementations
 
-- Course materials and papers in respective folders
-- Original papers linked in `notes/replication_notes.md`
+The three folders below are reference implementations (not the final deliverable):
+
+| Folder | Description |
+|--------|-------------|
+| `r_Leo/` | Country-level SDG clustering (KMeans) |
+| `r_Ting/` | SDGi multi-label classification (TF-IDF + linear) |
+| `r_Aiden/` | HateXplain explainability (BERT + attention) |
+
+Each contains its own trained models and replication notes in `notes/replication_notes.md`.

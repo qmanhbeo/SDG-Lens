@@ -7,6 +7,8 @@
 
 ## Implementation Status (2026-05-03)
 
+**Status: COMPLETED** — Solution 1 is now `solution1_sdg_lens/`
+
 A minimal working prototype now exists in `solution1_sdg_lens/`.
 
 - Entrypoint: `solution1_sdg_lens/run.py`
