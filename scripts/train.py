@@ -513,7 +513,7 @@ def package_version(package_name: str) -> str | None:
         return None
 
 
-def write_json(payload: dict[str, Any] | list[Any], path: Path) -> None:
+def write_json_local(payload: dict[str, Any] | list[Any], path: Path) -> None:
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
@@ -715,11 +715,11 @@ def save_experiment(
     }
 
     torch.save(checkpoint_payload(model, args, run_config, metrics), run_dir / "model.pt")
-    write_json(run_config, run_dir / "run_config.json")
-    write_json(metrics, run_dir / "metrics.json")
-    write_json(examples, run_dir / "examples.json")
-    write_json(combined, run_dir / "results.json")
-    write_json(combined, output_dir / "results.json")
+    write_json_local(run_config, run_dir / "run_config.json")
+    write_json_local(metrics, run_dir / "metrics.json")
+    write_json_local(examples, run_dir / "examples.json")
+    write_json_local(combined, run_dir / "results.json")
+    write_json_local(combined, output_dir / "results.json")
     write_run_readme(run_dir, run_config, metrics)
     append_runs_index(output_dir, run_config, metrics)
     return run_dir
@@ -1036,48 +1036,31 @@ def train_one(args: argparse.Namespace, train_size: int, seed: int) -> dict[str,
 
     out_dir.mkdir(parents=True, exist_ok=True)
     print(f"[train] training bert train={train_size} seed={seed}")
-    bert_args = build_model_parser().parse_args(
-        [
-            "--data_dir",
-            str(DATA_DIR),
-            "--output_dir",
-            str(out_dir),
-            "--model_name",
-            args.model_name,
-            "--language",
-            args.language,
-            "--train_samples",
-            str(train_size),
-            "--test_samples",
-            str(args.test_samples),
-            "--epochs",
-            str(args.epochs),
-            "--batch_size",
-            str(args.batch_size),
-            "--max_length",
-            str(args.max_length),
-            "--learning_rate",
-            str(args.learning_rate),
-            "--threshold",
-            str(args.threshold),
-            "--examples",
-            str(args.examples),
-            "--top_tokens",
-            str(args.top_tokens),
-            "--device",
-            args.device,
-            "--trainable_encoder_layers",
-            str(args.trainable_encoder_layers),
-            "--seed",
-            str(seed),
-            "--test_seed",
-            str(args.test_seed),
-        ]
-    )
+    bert_args_list = [
+        "--data_dir", str(DATA_DIR),
+        "--output_dir", str(out_dir),
+        "--model_name", args.model_name,
+        "--language", args.language,
+        "--train_samples", str(train_size),
+        "--epochs", str(args.epochs),
+        "--batch_size", str(args.batch_size),
+        "--max_length", str(args.max_length),
+        "--learning_rate", str(args.learning_rate),
+        "--threshold", str(args.threshold),
+        "--examples", str(args.examples),
+        "--top_tokens", str(args.top_tokens),
+        "--device", args.device,
+        "--trainable_encoder_layers", str(args.trainable_encoder_layers),
+        "--seed", str(seed),
+        "--test_seed", str(args.test_seed),
+    ]
+    if args.test_samples is not None:
+        bert_args_list.extend(["--test_samples", str(args.test_samples)])
     if args.allow_download:
-        bert_args.allow_download = True
+        bert_args_list.append("--allow_download")
     if args.unfreeze_encoder:
-        bert_args.unfreeze_encoder = True
+        bert_args_list.append("--unfreeze_encoder")
+    bert_args = build_model_parser().parse_args(bert_args_list)
 
     run_from_args(bert_args)
     results_path = out_dir / "results.json"
@@ -1125,7 +1108,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seeds", nargs="+", type=int, default=SEEDS)
     parser.add_argument("--train-sizes", nargs="+", type=int, default=TRAIN_SIZES)
     parser.add_argument("--language", choices=["en", "es", "fr", "all"], default="en")
-    parser.add_argument("--test-samples", type=int, default=TEST_SAMPLES)
+    parser.add_argument("--test-samples", type=int, default=None, help="Number of test samples; omit or pass 0 for full test set (default: full test set).")
     parser.add_argument("--test-seed", type=int, default=TEST_SEED)
     parser.add_argument("--model-name", default="sentence-transformers/all-MiniLM-L6-v2")
     parser.add_argument("--allow-download", action="store_true")

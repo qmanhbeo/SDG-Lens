@@ -200,8 +200,8 @@ def _add_sweep_args(p: argparse.ArgumentParser) -> None:
         help="Text language filter (default: en).",
     )
     p.add_argument(
-        "--test-samples", type=int, default=300,
-        help="Number of test samples (default: 300).",
+        "--test-samples", type=int, default=None,
+        help="Number of test samples; omit for full test set (default: full).",
     )
     p.add_argument(
         "--test-seed", type=int, default=43,
@@ -239,8 +239,8 @@ def _add_train_args(p: argparse.ArgumentParser) -> None:
         help="Text language filter (default: en).",
     )
     p.add_argument(
-        "--test-samples", type=int, default=300,
-        help="Number of test samples (default: 300).",
+        "--test-samples", type=int, default=None,
+        help="Number of test samples; omit for full test set (default: full).",
     )
     p.add_argument(
         "--test-seed", type=int, default=43,
@@ -319,8 +319,8 @@ def _add_baseline_args(p: argparse.ArgumentParser) -> None:
         help="Text language filter (default: en).",
     )
     p.add_argument(
-        "--test-samples", type=int, default=300,
-        help="Number of test samples (default: 300).",
+        "--test-samples", type=int, default=None,
+        help="Number of test samples; omit for full test set (default: full).",
     )
     p.add_argument(
         "--test-seed", type=int, default=43,
