@@ -13,11 +13,21 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from pipeline_utils import OUTPUTS_DIR, RESULTS_DIR, ensure_base_dirs, rel_path, write_status
+from pipeline_utils import (
+    MANUSCRIPT_DIR,
+    OUTPUTS_DIR,
+    RESULTS_DIR,
+    ensure_base_dirs,
+    rel_path,
+    write_status,
+)
 
 
 TABLES_DIR = OUTPUTS_DIR / "tables"
 CHARTS_DIR = OUTPUTS_DIR / "charts"
+MANUSCRIPT_VIZ_DIR = MANUSCRIPT_DIR / "visualization"
+MANUSCRIPT_TABLES_DIR = MANUSCRIPT_VIZ_DIR / "tables"
+MANUSCRIPT_CHARTS_DIR = MANUSCRIPT_VIZ_DIR / "charts"
 
 
 def read_summary() -> list[dict[str, Any]]:
@@ -108,6 +118,20 @@ def plot_metric(rows: list[dict[str, Any]], metric: str, title: str, path: Path)
     plt.close(fig)
 
 
+def mirror_to_manuscript() -> None:
+    MANUSCRIPT_TABLES_DIR.mkdir(parents=True, exist_ok=True)
+    MANUSCRIPT_CHARTS_DIR.mkdir(parents=True, exist_ok=True)
+    for src in [TABLES_DIR / "evaluation_summary_table.tex"]:
+        dst = MANUSCRIPT_TABLES_DIR / src.name
+        dst.write_bytes(src.read_bytes())
+    for src in [
+        CHARTS_DIR / "model_comparison_micro_f1.png",
+        CHARTS_DIR / "model_comparison_macro_f1.png",
+    ]:
+        dst = MANUSCRIPT_CHARTS_DIR / src.name
+        dst.write_bytes(src.read_bytes())
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Generate manuscript-ready SDG Lens tables and charts.")
     parser.add_argument("--dry-run", action="store_true")
@@ -131,6 +155,7 @@ def main() -> int:
     write_latex_table(TABLES_DIR / "evaluation_summary_table.tex", rows)
     plot_metric(rows, "micro_f1", "SDG Lens Micro-F1 by Model and Train Size", CHARTS_DIR / "model_comparison_micro_f1.png")
     plot_metric(rows, "macro_f1", "SDG Lens Macro-F1 by Model and Train Size", CHARTS_DIR / "model_comparison_macro_f1.png")
+    mirror_to_manuscript()
     write_status("visualize", "completed", "visualization", outputs_root=rel_path(OUTPUTS_DIR))
     print("[visualize] done")
     return 0

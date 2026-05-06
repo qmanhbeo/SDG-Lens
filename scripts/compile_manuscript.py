@@ -8,6 +8,11 @@ from pipeline_utils import MANUSCRIPT_DIR, ensure_base_dirs, rel_path, write_sta
 
 
 TEX_NAME = "sdg_lens_manuscript.tex"
+REQUIRED_VIZ = [
+    MANUSCRIPT_DIR / "visualization" / "tables" / "evaluation_summary_table.tex",
+    MANUSCRIPT_DIR / "visualization" / "charts" / "model_comparison_micro_f1.png",
+    MANUSCRIPT_DIR / "visualization" / "charts" / "model_comparison_macro_f1.png",
+]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -23,6 +28,12 @@ def main() -> int:
     tex_path = MANUSCRIPT_DIR / args.tex
     if not tex_path.exists():
         raise FileNotFoundError(f"Missing manuscript source: {tex_path}")
+    missing = [rel_path(p) for p in REQUIRED_VIZ if not p.exists()]
+    if missing:
+        raise FileNotFoundError(
+            f"Missing required visualization assets:\n  " + "\n  ".join(missing) +
+            "\nRun: python main.py visualize"
+        )
     pdflatex = shutil.which("pdflatex")
     if pdflatex is None:
         raise RuntimeError("pdflatex was not found on PATH; cannot compile manuscript.")
