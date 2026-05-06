@@ -1,0 +1,8 @@
+{
+  "job": "visualize",
+  "status": "completed",
+  "phase": "visualization",
+  "updated_at": "2026-05-07T00:20:54",
+  "last_heartbeat": "2026-05-07T00:20:54",
+  "outputs_root": "outputs"
+}

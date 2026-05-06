@@ -1,0 +1,411 @@
+[
+  {
+    "text": "120 The Government’s Assesments Conserve and sustainably use the oceans, seas and marine resources for sustainable development. Denmark is working actively to ensure the sustainable use of marine environments. To ensure that future generations can also benefit from marine resources, it is important to achieve and maintain good environmental conditions in marine ecosystems. Through Denmark’s marine strategy, marine area plans, Natura 2000 plans, and the country’s first sea plan, the Government is working to preserve and ensure sustainable use of the seas and their resources. Denmark is also contributing to SDG 14 through its engagement in international efforts relating to the marine enviro...",
+    "gold_labels": [
+      14
+    ],
+    "predicted_labels": [
+      14
+    ],
+    "top_label_scores": [
+      {
+        "label": 14,
+        "score": 0.9362
+      },
+      {
+        "label": 3,
+        "score": 0.0266
+      },
+      {
+        "label": 15,
+        "score": 0.0242
+      },
+      {
+        "label": 8,
+        "score": 0.0238
+      },
+      {
+        "label": 6,
+        "score": 0.0235
+      }
+    ],
+    "top_tokens": [
+      {
+        "token": "oceans",
+        "score": 0.095623
+      },
+      {
+        "token": "marine",
+        "score": 0.084597
+      },
+      {
+        "token": "14",
+        "score": 0.079811
+      },
+      {
+        "token": "marine",
+        "score": 0.070139
+      },
+      {
+        "token": "marine",
+        "score": 0.055737
+      },
+      {
+        "token": "seas",
+        "score": 0.051276
+      },
+      {
+        "token": "marine",
+        "score": 0.049312
+      },
+      {
+        "token": "conserve",
+        "score": 0.043873
+      },
+      {
+        "token": "marine",
+        "score": 0.041153
+      },
+      {
+        "token": "marine",
+        "score": 0.034748
+      },
+      {
+        "token": "marine",
+        "score": 0.029815
+      },
+      {
+        "token": "resources",
+        "score": 0.024189
+      }
+    ]
+  },
+  {
+    "text": "Project Name Taman Rambai Flood Mitigation Plan Project Owner MBMB Collaborators JPS Project Description The Taman Rambai Flood Mitigation Plan is a comprehensive strategy or arrangement aimed at minimizing the effects of floods in the area. Its primary purpose is to safeguard flood-prone regions and mitigate the damages caused by flooding incidents. Relevant SDG Targets 15",
+    "gold_labels": [
+      1,
+      11,
+      13
+    ],
+    "predicted_labels": [
+      6,
+      13
+    ],
+    "top_label_scores": [
+      {
+        "label": 13,
+        "score": 0.7503
+      },
+      {
+        "label": 6,
+        "score": 0.3026
+      },
+      {
+        "label": 11,
+        "score": 0.2607
+      },
+      {
+        "label": 17,
+        "score": 0.1469
+      },
+      {
+        "label": 14,
+        "score": 0.0621
+      }
+    ],
+    "top_tokens": [
+      {
+        "token": "floods",
+        "score": 0.197787
+      },
+      {
+        "token": "flood",
+        "score": 0.107764
+      },
+      {
+        "token": "flood",
+        "score": 0.103363
+      },
+      {
+        "token": "flood",
+        "score": 0.098569
+      },
+      {
+        "token": "flooding",
+        "score": 0.052895
+      },
+      {
+        "token": "15",
+        "score": 0.047588
+      },
+      {
+        "token": "plan",
+        "score": 0.023785
+      },
+      {
+        "token": "project",
+        "score": 0.018875
+      },
+      {
+        "token": "##g",
+        "score": 0.018209
+      },
+      {
+        "token": "project",
+        "score": 0.01795
+      },
+      {
+        "token": "collaborators",
+        "score": 0.014143
+      },
+      {
+        "token": "##an",
+        "score": 0.01269
+      }
+    ]
+  },
+  {
+    "text": "Suwon 2030 Sustainable Development Goal 3: $itZ with 5ransparent and $lean 8ater $ZDle Expansion of permeable surfaces Water management system participated by citizens Securing healthy ecosystem for streams Improving water quality of streams Recycling rainwater/water Water self sufficiency rate 03 City with Transparent and Clean Water Cycle 53 Suwon Bs B $itZ oG 8Bter to ReBM\u000e i[e 5rBnspBrent BnE $MeBn 8Bter $ZcMe #BseE on *ts -onH 5rBEition oG 1uCMic\u000epri\u000e WBte 8Bter GoWernBnce Suwon 2030 Sustainable Development Goals SDGs weSe aEopteE unEeS the vision of ˎSuwon a Sustainable $itZ wheSe )uman anE &nviSonment $oeYist\u000fˎ Despite beinH a EenselZ populateE DitZ with moSe than \u0012 million people...",
+    "gold_labels": [
+      6
+    ],
+    "predicted_labels": [
+      6,
+      14
+    ],
+    "top_label_scores": [
+      {
+        "label": 6,
+        "score": 0.95
+      },
+      {
+        "label": 14,
+        "score": 0.497
+      },
+      {
+        "label": 15,
+        "score": 0.2754
+      },
+      {
+        "label": 13,
+        "score": 0.1323
+      },
+      {
+        "label": 11,
+        "score": 0.0494
+      }
+    ],
+    "top_tokens": [
+      {
+        "token": "ecosystem",
+        "score": 0.154308
+      },
+      {
+        "token": "water",
+        "score": 0.110298
+      },
+      {
+        "token": "water",
+        "score": 0.045625
+      },
+      {
+        "token": "water",
+        "score": 0.035455
+      },
+      {
+        "token": "sustainable",
+        "score": 0.03487
+      },
+      {
+        "token": "streams",
+        "score": 0.033135
+      },
+      {
+        "token": "3",
+        "score": 0.028922
+      },
+      {
+        "token": "8",
+        "score": 0.028867
+      },
+      {
+        "token": "water",
+        "score": 0.025315
+      },
+      {
+        "token": "streams",
+        "score": 0.023834
+      },
+      {
+        "token": "healthy",
+        "score": 0.023208
+      },
+      {
+        "token": "surfaces",
+        "score": 0.02304
+      }
+    ]
+  },
+  {
+    "text": "48 CHAPTER 4 PROGRESS ON GOALS AND TARGETS 4.1 Voluntary National Reviews (VNR) 2019 4.1.1 Goal 4. Quality Education The discussion of Goal 4. Quality Education will cover 4 main issues, namely: (1) Fulfilling access to education which consists of indicators of Gross Enrollment Rate at the Primary school/ Madrasah Ibtidaiah (islamic primary school)/equivalent level; junior secondary school/ Madrasah Tsanawiah (Islamic Junior Secondary School/equivalent, senior secondary school/vocational secondary school/Madrasah Aliah (Islamic Senior Secondary School)/equivalent level and tertiary level; (2) Improving the quality of teaching and learning consisting of indicators proportion of schools wit...",
+    "gold_labels": [
+      4
+    ],
+    "predicted_labels": [
+      4
+    ],
+    "top_label_scores": [
+      {
+        "label": 4,
+        "score": 0.9138
+      },
+      {
+        "label": 2,
+        "score": 0.0179
+      },
+      {
+        "label": 5,
+        "score": 0.0158
+      },
+      {
+        "label": 12,
+        "score": 0.0157
+      },
+      {
+        "label": 13,
+        "score": 0.0153
+      }
+    ],
+    "top_tokens": [
+      {
+        "token": "education",
+        "score": 0.182309
+      },
+      {
+        "token": "education",
+        "score": 0.158085
+      },
+      {
+        "token": "education",
+        "score": 0.136487
+      },
+      {
+        "token": "4",
+        "score": 0.043732
+      },
+      {
+        "token": "4",
+        "score": 0.030308
+      },
+      {
+        "token": "4",
+        "score": 0.025418
+      },
+      {
+        "token": "4",
+        "score": 0.021477
+      },
+      {
+        "token": "national",
+        "score": 0.020588
+      },
+      {
+        "token": "enrollment",
+        "score": 0.020012
+      },
+      {
+        "token": "quality",
+        "score": 0.019589
+      },
+      {
+        "token": "4",
+        "score": 0.01869
+      },
+      {
+        "token": "quality",
+        "score": 0.017386
+      }
+    ]
+  },
+  {
+    "text": "Make cities and human settlements inclusive, safe, resilient and sustainable EU internal action Overview and challenges While European cities and communities provide opportunities for employment, economic and cultural activity, many inhabit ants face environmental and social challenges. Housing issues, pollution (air, water, noise, waste), and crime are some of the most serious challenges faced in urban areas. The EU supports transitions with the core objective of being socially inclusive, in order to leave no one and no place behind, by offering funding, capacity and knowledge-building support. Cities have an essential role to play in taking this process for ward, in innovating, investin...",
+    "gold_labels": [
+      11
+    ],
+    "predicted_labels": [
+      11
+    ],
+    "top_label_scores": [
+      {
+        "label": 11,
+        "score": 0.9255
+      },
+      {
+        "label": 8,
+        "score": 0.077
+      },
+      {
+        "label": 10,
+        "score": 0.0727
+      },
+      {
+        "label": 1,
+        "score": 0.0538
+      },
+      {
+        "label": 17,
+        "score": 0.0422
+      }
+    ],
+    "top_tokens": [
+      {
+        "token": "settlements",
+        "score": 0.138143
+      },
+      {
+        "token": "cities",
+        "score": 0.126059
+      },
+      {
+        "token": "cities",
+        "score": 0.051379
+      },
+      {
+        "token": "cities",
+        "score": 0.035292
+      },
+      {
+        "token": "urban",
+        "score": 0.033814
+      },
+      {
+        "token": "employment",
+        "score": 0.02968
+      },
+      {
+        "token": "##ili",
+        "score": 0.027238
+      },
+      {
+        "token": "socially",
+        "score": 0.02656
+      },
+      {
+        "token": "ants",
+        "score": 0.025375
+      },
+      {
+        "token": "safe",
+        "score": 0.024956
+      },
+      {
+        "token": "communities",
+        "score": 0.024628
+      },
+      {
+        "token": "environmental",
+        "score": 0.024214
+      }
+    ]
+  }
+]

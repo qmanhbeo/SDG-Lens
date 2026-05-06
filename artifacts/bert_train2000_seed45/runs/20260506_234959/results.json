@@ -1,0 +1,557 @@
+{
+  "run_config": {
+    "run_id": "20260506_234959",
+    "timestamp": "20260506_234959",
+    "mode": "train_eval",
+    "command": "python /home/manh/study-BHam/AI4GC-2/scripts/train.py --seeds 42 43 44 45 46 --train-sizes 1000 2000 4000 --language en --test-seed 43 --device cuda --force",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "num_labels": 17,
+    "label_names": [
+      "SDG_1",
+      "SDG_2",
+      "SDG_3",
+      "SDG_4",
+      "SDG_5",
+      "SDG_6",
+      "SDG_7",
+      "SDG_8",
+      "SDG_9",
+      "SDG_10",
+      "SDG_11",
+      "SDG_12",
+      "SDG_13",
+      "SDG_14",
+      "SDG_15",
+      "SDG_16",
+      "SDG_17"
+    ],
+    "data_dir": "/home/manh/study-BHam/AI4GC-2/data",
+    "dataset_source": "/home/manh/study-BHam/AI4GC-2/data",
+    "language": "en",
+    "train_limit": 2000,
+    "test_limit": 300,
+    "train_rows": 2000,
+    "test_rows": 300,
+    "epochs": 3,
+    "batch_size": 8,
+    "max_length": 128,
+    "learning_rate": 5e-05,
+    "threshold": 0.3,
+    "unfrozen_layers": 2,
+    "trainable_encoder_layers": 2,
+    "unfreeze_encoder": false,
+    "encoder_trainable_mode": "last_2_layers",
+    "trainable_params": 3555473,
+    "seed": 45,
+    "test_seed": 43,
+    "device": "cuda",
+    "run_dir": "/home/manh/study-BHam/AI4GC-2/artifacts/bert_train2000_seed45/runs/20260506_234959",
+    "checkpoint_loaded_from": null,
+    "python_version": "3.10.20 | packaged by conda-forge | (main, Mar  5 2026, 16:42:22) [GCC 14.3.0]",
+    "torch_version": "2.5.1+cu121",
+    "transformers_version": "5.8.0",
+    "sklearn_version": "1.7.2",
+    "attention_note": "Last-layer CLS attention averaged over heads; proxy explanation only.",
+    "timing": {
+      "training_time_seconds": 22.500123714000438,
+      "training_time_minutes": 0.3750020619000073
+    }
+  },
+  "metrics": {
+    "micro_f1": 0.6532343584305408,
+    "macro_f1": 0.6323728540580593,
+    "weighted_f1": 0.6496881095057463,
+    "subset_accuracy": 0.6466666666666666,
+    "per_label_f1": {
+      "1": 0.5531914893617021,
+      "2": 0.631578947368421,
+      "3": 0.5263157894736842,
+      "4": 0.7,
+      "5": 0.4375,
+      "6": 0.6666666666666666,
+      "7": 0.6153846153846154,
+      "8": 0.5789473684210527,
+      "9": 0.65625,
+      "10": 0.7441860465116279,
+      "11": 0.7049180327868853,
+      "12": 0.7419354838709677,
+      "13": 0.7213114754098361,
+      "14": 0.5263157894736842,
+      "15": 0.7368421052631579,
+      "16": 0.5185185185185185,
+      "17": 0.6904761904761905
+    },
+    "average_true_labels": 1.63,
+    "average_predicted_labels": 1.5133333333333334,
+    "last_train_loss": 0.11770994690060615,
+    "threshold": 0.3,
+    "empty_prediction_fallback": "top1",
+    "training_time_seconds": 22.500123714000438,
+    "training_time_minutes": 0.3750020619000073
+  },
+  "examples": [
+    {
+      "text": "23 Goal 9 Industry, Innovation and Infrastructure Toyama City is an industrial hub and home to many businesses. However, the number of younger residents departing the city for higher education or for work has exceeded those who join as residents. To generate stable employment, Toyama needs to implement a growth strategy that would develop new markets and attract businesses with strong potential. Toyama City is making efforts to transition to a city of commerce, services, and culture and recognized for its sound infrastructure. SDG target Toyama Indicator Past Last Plan 9.1 Develop sustainable, resilient and inclusive infrastructure Proportion of aseismic distributing water pipes 42％ （2016...",
+      "gold_labels": [
+        9
+      ],
+      "predicted_labels": [
+        9
+      ],
+      "top_label_scores": [
+        {
+          "label": 9,
+          "score": 0.912
+        },
+        {
+          "label": 8,
+          "score": 0.205
+        },
+        {
+          "label": 11,
+          "score": 0.0977
+        },
+        {
+          "label": 17,
+          "score": 0.078
+        },
+        {
+          "label": 10,
+          "score": 0.0702
+        }
+      ],
+      "top_tokens": [
+        {
+          "token": "industry",
+          "score": 0.199806
+        },
+        {
+          "token": "infrastructure",
+          "score": 0.119128
+        },
+        {
+          "token": "9",
+          "score": 0.071784
+        },
+        {
+          "token": "infrastructure",
+          "score": 0.064626
+        },
+        {
+          "token": "industrial",
+          "score": 0.04867
+        },
+        {
+          "token": "infrastructure",
+          "score": 0.037461
+        },
+        {
+          "token": "innovation",
+          "score": 0.036319
+        },
+        {
+          "token": "goal",
+          "score": 0.023514
+        },
+        {
+          "token": "businesses",
+          "score": 0.020595
+        },
+        {
+          "token": "9",
+          "score": 0.018654
+        },
+        {
+          "token": "city",
+          "score": 0.01401
+        },
+        {
+          "token": "employment",
+          "score": 0.01373
+        }
+      ]
+    },
+    {
+      "text": "56 Voluntary National Review of Turkmenistan peace, jusTIce and 16 sTrong InsTITuTes Voluntary National Review of Turkmenistan 57 Turkmenistan pays special attention to the creation of the conditions necessary for building democratic and inclusive society, which is based on the rule of law and accountability of institutions at all levels to ensure basic human freedoms. To achieve this, the government is implementing the reform of national human rights protection system by carrying out activities focused on strengthening democratic principles in society, legal framework of the State and development of civil society. Turkmenistan has been an active member of the Executive Committee of the U...",
+      "gold_labels": [
+        16
+      ],
+      "predicted_labels": [
+        16
+      ],
+      "top_label_scores": [
+        {
+          "label": 16,
+          "score": 0.8548
+        },
+        {
+          "label": 10,
+          "score": 0.1235
+        },
+        {
+          "label": 17,
+          "score": 0.1065
+        },
+        {
+          "label": 5,
+          "score": 0.0907
+        },
+        {
+          "label": 4,
+          "score": 0.0546
+        }
+      ],
+      "top_tokens": [
+        {
+          "token": "peace",
+          "score": 0.129876
+        },
+        {
+          "token": "justice",
+          "score": 0.122017
+        },
+        {
+          "token": "democratic",
+          "score": 0.070394
+        },
+        {
+          "token": "16",
+          "score": 0.062451
+        },
+        {
+          "token": "gender",
+          "score": 0.05207
+        },
+        {
+          "token": "inclusive",
+          "score": 0.040566
+        },
+        {
+          "token": "society",
+          "score": 0.035836
+        },
+        {
+          "token": "democratic",
+          "score": 0.029181
+        },
+        {
+          "token": "rights",
+          "score": 0.023421
+        },
+        {
+          "token": "law",
+          "score": 0.023286
+        },
+        {
+          "token": "refugees",
+          "score": 0.017145
+        },
+        {
+          "token": "voluntary",
+          "score": 0.016442
+        }
+      ]
+    },
+    {
+      "text": "34 GUIDELINES  Ensure access to housing and services for all and increase social diversity in cities  Establish shared governance for collective construction of the urban environment  Strengthen the sustainability of cities and preserve the architectural heritage  Encourage urban resilience by enhancing risk prevention  Encourage the emergence of innovations and develop smart cities  Internationally, encourage inclusive, sound and resilient urban development ISSUES AND ACTIONS IN FRANCE At a time when cities are continuing to grow rapidly by expanding towards peripheral areas, the development of more sustainable cities is a major challenge in order to improve residents’ quality of l...",
+      "gold_labels": [
+        11
+      ],
+      "predicted_labels": [
+        11
+      ],
+      "top_label_scores": [
+        {
+          "label": 11,
+          "score": 0.9555
+        },
+        {
+          "label": 16,
+          "score": 0.11
+        },
+        {
+          "label": 17,
+          "score": 0.1045
+        },
+        {
+          "label": 1,
+          "score": 0.1037
+        },
+        {
+          "label": 10,
+          "score": 0.1035
+        }
+      ],
+      "top_tokens": [
+        {
+          "token": "housing",
+          "score": 0.08371
+        },
+        {
+          "token": "cities",
+          "score": 0.072681
+        },
+        {
+          "token": "social",
+          "score": 0.072404
+        },
+        {
+          "token": "urban",
+          "score": 0.064477
+        },
+        {
+          "token": "diversity",
+          "score": 0.059028
+        },
+        {
+          "token": "cities",
+          "score": 0.056438
+        },
+        {
+          "token": "cities",
+          "score": 0.042868
+        },
+        {
+          "token": "cities",
+          "score": 0.036423
+        },
+        {
+          "token": "services",
+          "score": 0.02743
+        },
+        {
+          "token": "housing",
+          "score": 0.026177
+        },
+        {
+          "token": "urban",
+          "score": 0.026044
+        },
+        {
+          "token": "##ili",
+          "score": 0.022423
+        }
+      ]
+    },
+    {
+      "text": "MONGOLIA VOLUNTARY NATIONAL REVIEW REPORT 2019 29 Goal 11. Make Cities and Human Settlement Inclusive, Safe, Resilient and Sustainable It is possible to reduce urban concentration through more equal regional development. Around 65 percent of Mongolia’s economic production is concentrated in Ulaanbaatar, with up to 60 percent of total manufacturing products, up to 90 percent of construction, up to 85 percent of wholesale and retail trade, and up to 98 percent of information and telecommunications are produced in the capital. Also, as of 2017, 124 thousand enterprises operated in Ulaanbaatar, accounting for 75 percent of the total number of enterprises in the country. 30 MONGOLIA VOLUNTARY...",
+      "gold_labels": [
+        11
+      ],
+      "predicted_labels": [
+        11
+      ],
+      "top_label_scores": [
+        {
+          "label": 11,
+          "score": 0.535
+        },
+        {
+          "label": 8,
+          "score": 0.1246
+        },
+        {
+          "label": 9,
+          "score": 0.0804
+        },
+        {
+          "label": 12,
+          "score": 0.0551
+        },
+        {
+          "label": 10,
+          "score": 0.0438
+        }
+      ],
+      "top_tokens": [
+        {
+          "token": "cities",
+          "score": 0.181999
+        },
+        {
+          "token": "11",
+          "score": 0.08591
+        },
+        {
+          "token": "manufacturing",
+          "score": 0.084349
+        },
+        {
+          "token": "settlement",
+          "score": 0.072099
+        },
+        {
+          "token": "safe",
+          "score": 0.055552
+        },
+        {
+          "token": "urban",
+          "score": 0.051765
+        },
+        {
+          "token": "##ili",
+          "score": 0.033568
+        },
+        {
+          "token": "economic",
+          "score": 0.029056
+        },
+        {
+          "token": "concentration",
+          "score": 0.028064
+        },
+        {
+          "token": "regional",
+          "score": 0.025342
+        },
+        {
+          "token": "enterprises",
+          "score": 0.021381
+        },
+        {
+          "token": "voluntary",
+          "score": 0.016549
+        }
+      ]
+    },
+    {
+      "text": "30 Digital inclusion of people The use of the Internet and digital devices implies being part of a \"connected” society, where digital inclusion operates as an advantage and is key to development, thus contributing significantly to people's well-being. In this sense, the Government of the Province of Córdoba considers that information and communication technologies contribute to accelerating the achievement of the SDGs, particularly SDG 10: Reduced Inequalities. The great challenge in terms of digital inclusion is indeed the reduction of the digital divide. In this context, it is important to state that the Government of the Province considers that there are diferent forms of inequality be...",
+      "gold_labels": [
+        10
+      ],
+      "predicted_labels": [
+        10
+      ],
+      "top_label_scores": [
+        {
+          "label": 10,
+          "score": 0.5682
+        },
+        {
+          "label": 9,
+          "score": 0.2537
+        },
+        {
+          "label": 11,
+          "score": 0.2258
+        },
+        {
+          "label": 16,
+          "score": 0.1517
+        },
+        {
+          "label": 4,
+          "score": 0.0804
+        }
+      ],
+      "top_tokens": [
+        {
+          "token": "internet",
+          "score": 0.107249
+        },
+        {
+          "token": "10",
+          "score": 0.088136
+        },
+        {
+          "token": "##qual",
+          "score": 0.077339
+        },
+        {
+          "token": "digital",
+          "score": 0.061131
+        },
+        {
+          "token": "digital",
+          "score": 0.050106
+        },
+        {
+          "token": "communication",
+          "score": 0.045782
+        },
+        {
+          "token": "inclusion",
+          "score": 0.045763
+        },
+        {
+          "token": "digital",
+          "score": 0.041476
+        },
+        {
+          "token": "inclusion",
+          "score": 0.040888
+        },
+        {
+          "token": "digital",
+          "score": 0.028261
+        },
+        {
+          "token": "inclusion",
+          "score": 0.023773
+        },
+        {
+          "token": "divide",
+          "score": 0.022678
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "run_id": "20260506_234959",
+    "timestamp": "20260506_234959",
+    "mode": "train_eval",
+    "command": "python /home/manh/study-BHam/AI4GC-2/scripts/train.py --seeds 42 43 44 45 46 --train-sizes 1000 2000 4000 --language en --test-seed 43 --device cuda --force",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "num_labels": 17,
+    "label_names": [
+      "SDG_1",
+      "SDG_2",
+      "SDG_3",
+      "SDG_4",
+      "SDG_5",
+      "SDG_6",
+      "SDG_7",
+      "SDG_8",
+      "SDG_9",
+      "SDG_10",
+      "SDG_11",
+      "SDG_12",
+      "SDG_13",
+      "SDG_14",
+      "SDG_15",
+      "SDG_16",
+      "SDG_17"
+    ],
+    "data_dir": "/home/manh/study-BHam/AI4GC-2/data",
+    "dataset_source": "/home/manh/study-BHam/AI4GC-2/data",
+    "language": "en",
+    "train_limit": 2000,
+    "test_limit": 300,
+    "train_rows": 2000,
+    "test_rows": 300,
+    "epochs": 3,
+    "batch_size": 8,
+    "max_length": 128,
+    "learning_rate": 5e-05,
+    "threshold": 0.3,
+    "unfrozen_layers": 2,
+    "trainable_encoder_layers": 2,
+    "unfreeze_encoder": false,
+    "encoder_trainable_mode": "last_2_layers",
+    "trainable_params": 3555473,
+    "seed": 45,
+    "test_seed": 43,
+    "device": "cuda",
+    "run_dir": "/home/manh/study-BHam/AI4GC-2/artifacts/bert_train2000_seed45/runs/20260506_234959",
+    "checkpoint_loaded_from": null,
+    "python_version": "3.10.20 | packaged by conda-forge | (main, Mar  5 2026, 16:42:22) [GCC 14.3.0]",
+    "torch_version": "2.5.1+cu121",
+    "transformers_version": "5.8.0",
+    "sklearn_version": "1.7.2",
+    "attention_note": "Last-layer CLS attention averaged over heads; proxy explanation only.",
+    "timing": {
+      "training_time_seconds": 22.500123714000438,
+      "training_time_minutes": 0.3750020619000073
+    }
+  }
+}

@@ -1,0 +1,559 @@
+{
+  "run_config": {
+    "run_id": "20260507_000704",
+    "timestamp": "20260507_000704",
+    "mode": "train_eval",
+    "command": "python /home/manh/study-BHam/AI4GC-2/scripts/train.py --seeds 42 43 44 45 46 --train-sizes 1000 2000 4000 --language en --test-seed 43 --device cuda --force",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "num_labels": 17,
+    "label_names": [
+      "SDG_1",
+      "SDG_2",
+      "SDG_3",
+      "SDG_4",
+      "SDG_5",
+      "SDG_6",
+      "SDG_7",
+      "SDG_8",
+      "SDG_9",
+      "SDG_10",
+      "SDG_11",
+      "SDG_12",
+      "SDG_13",
+      "SDG_14",
+      "SDG_15",
+      "SDG_16",
+      "SDG_17"
+    ],
+    "data_dir": "/home/manh/study-BHam/AI4GC-2/data",
+    "dataset_source": "/home/manh/study-BHam/AI4GC-2/data",
+    "language": "en",
+    "train_limit": 1000,
+    "test_limit": 1470,
+    "train_rows": 1000,
+    "test_rows": 1057,
+    "epochs": 3,
+    "batch_size": 8,
+    "max_length": 128,
+    "learning_rate": 5e-05,
+    "threshold": 0.3,
+    "unfrozen_layers": 2,
+    "trainable_encoder_layers": 2,
+    "unfreeze_encoder": false,
+    "encoder_trainable_mode": "last_2_layers",
+    "trainable_params": 3555473,
+    "seed": 43,
+    "test_seed": 43,
+    "device": "cuda",
+    "run_dir": "/home/manh/study-BHam/AI4GC-2/artifacts/bert_train1000_seed43/runs/20260507_000704",
+    "checkpoint_loaded_from": null,
+    "python_version": "3.10.20 | packaged by conda-forge | (main, Mar  5 2026, 16:42:22) [GCC 14.3.0]",
+    "torch_version": "2.5.1+cu121",
+    "transformers_version": "5.8.0",
+    "sklearn_version": "1.7.2",
+    "attention_note": "Last-layer CLS attention averaged over heads; proxy explanation only.",
+    "timing": {
+      "training_time_seconds": 11.216581980999763,
+      "training_time_minutes": 0.1869430330166627
+    }
+  },
+  "metrics": {
+    "micro_f1": 0.6514633219308248,
+    "macro_f1": 0.649835219738109,
+    "weighted_f1": 0.6504722892127444,
+    "subset_accuracy": 0.6821192052980133,
+    "per_label_f1": {
+      "1": 0.5675675675675675,
+      "2": 0.62,
+      "3": 0.6527777777777778,
+      "4": 0.7241379310344828,
+      "5": 0.5217391304347826,
+      "6": 0.7722772277227723,
+      "7": 0.611764705882353,
+      "8": 0.6274509803921569,
+      "9": 0.6125,
+      "10": 0.6294416243654822,
+      "11": 0.6930091185410334,
+      "12": 0.654320987654321,
+      "13": 0.6867469879518072,
+      "14": 0.7142857142857143,
+      "15": 0.6896551724137931,
+      "16": 0.6266666666666667,
+      "17": 0.6428571428571429
+    },
+    "average_true_labels": 1.4408703878902553,
+    "average_predicted_labels": 1.0482497634815515,
+    "last_train_loss": 0.16748327434062957,
+    "threshold": 0.3,
+    "empty_prediction_fallback": "top1",
+    "training_time_seconds": 11.216581980999763,
+    "training_time_minutes": 0.1869430330166627
+  },
+  "examples": [
+    {
+      "text": "120 The Government’s Assesments Conserve and sustainably use the oceans, seas and marine resources for sustainable development. Denmark is working actively to ensure the sustainable use of marine environments. To ensure that future generations can also benefit from marine resources, it is important to achieve and maintain good environmental conditions in marine ecosystems. Through Denmark’s marine strategy, marine area plans, Natura 2000 plans, and the country’s first sea plan, the Government is working to preserve and ensure sustainable use of the seas and their resources. Denmark is also contributing to SDG 14 through its engagement in international efforts relating to the marine enviro...",
+      "gold_labels": [
+        14
+      ],
+      "predicted_labels": [
+        14
+      ],
+      "top_label_scores": [
+        {
+          "label": 14,
+          "score": 0.6777
+        },
+        {
+          "label": 15,
+          "score": 0.1096
+        },
+        {
+          "label": 6,
+          "score": 0.0978
+        },
+        {
+          "label": 13,
+          "score": 0.0789
+        },
+        {
+          "label": 12,
+          "score": 0.0749
+        }
+      ],
+      "top_tokens": [
+        {
+          "token": "14",
+          "score": 0.053645
+        },
+        {
+          "token": "oceans",
+          "score": 0.051284
+        },
+        {
+          "token": "marine",
+          "score": 0.049352
+        },
+        {
+          "token": "resources",
+          "score": 0.046282
+        },
+        {
+          "token": "marine",
+          "score": 0.044392
+        },
+        {
+          "token": "marine",
+          "score": 0.03871
+        },
+        {
+          "token": "ecosystems",
+          "score": 0.036523
+        },
+        {
+          "token": "marine",
+          "score": 0.033559
+        },
+        {
+          "token": "marine",
+          "score": 0.032274
+        },
+        {
+          "token": "environmental",
+          "score": 0.032052
+        },
+        {
+          "token": "seas",
+          "score": 0.030218
+        },
+        {
+          "token": "sustainable",
+          "score": 0.027105
+        }
+      ]
+    },
+    {
+      "text": "Project Name Taman Rambai Flood Mitigation Plan Project Owner MBMB Collaborators JPS Project Description The Taman Rambai Flood Mitigation Plan is a comprehensive strategy or arrangement aimed at minimizing the effects of floods in the area. Its primary purpose is to safeguard flood-prone regions and mitigate the damages caused by flooding incidents. Relevant SDG Targets 15",
+      "gold_labels": [
+        1,
+        11,
+        13
+      ],
+      "predicted_labels": [
+        13
+      ],
+      "top_label_scores": [
+        {
+          "label": 13,
+          "score": 0.2931
+        },
+        {
+          "label": 6,
+          "score": 0.1589
+        },
+        {
+          "label": 11,
+          "score": 0.1466
+        },
+        {
+          "label": 15,
+          "score": 0.1331
+        },
+        {
+          "label": 14,
+          "score": 0.1206
+        }
+      ],
+      "top_tokens": [
+        {
+          "token": "floods",
+          "score": 0.144742
+        },
+        {
+          "token": "flood",
+          "score": 0.118911
+        },
+        {
+          "token": "flood",
+          "score": 0.099608
+        },
+        {
+          "token": "flood",
+          "score": 0.096947
+        },
+        {
+          "token": "flooding",
+          "score": 0.067485
+        },
+        {
+          "token": "15",
+          "score": 0.048469
+        },
+        {
+          "token": "plan",
+          "score": 0.020477
+        },
+        {
+          "token": "damages",
+          "score": 0.019711
+        },
+        {
+          "token": "regions",
+          "score": 0.016325
+        },
+        {
+          "token": "project",
+          "score": 0.01554
+        },
+        {
+          "token": "project",
+          "score": 0.014613
+        },
+        {
+          "token": "incidents",
+          "score": 0.013017
+        }
+      ]
+    },
+    {
+      "text": "Suwon 2030 Sustainable Development Goal 3: $itZ with 5ransparent and $lean 8ater $ZDle Expansion of permeable surfaces Water management system participated by citizens Securing healthy ecosystem for streams Improving water quality of streams Recycling rainwater/water Water self sufficiency rate 03 City with Transparent and Clean Water Cycle 53 Suwon Bs B $itZ oG 8Bter to ReBM\u000e i[e 5rBnspBrent BnE $MeBn 8Bter $ZcMe #BseE on *ts -onH 5rBEition oG 1uCMic\u000epri\u000e WBte 8Bter GoWernBnce Suwon 2030 Sustainable Development Goals SDGs weSe aEopteE unEeS the vision of ˎSuwon a Sustainable $itZ wheSe )uman anE &nviSonment $oeYist\u000fˎ Despite beinH a EenselZ populateE DitZ with moSe than \u0012 million people...",
+      "gold_labels": [
+        6
+      ],
+      "predicted_labels": [
+        6
+      ],
+      "top_label_scores": [
+        {
+          "label": 6,
+          "score": 0.3685
+        },
+        {
+          "label": 14,
+          "score": 0.2174
+        },
+        {
+          "label": 15,
+          "score": 0.1171
+        },
+        {
+          "label": 13,
+          "score": 0.0997
+        },
+        {
+          "label": 12,
+          "score": 0.0691
+        }
+      ],
+      "top_tokens": [
+        {
+          "token": "ecosystem",
+          "score": 0.105072
+        },
+        {
+          "token": "quality",
+          "score": 0.089538
+        },
+        {
+          "token": "water",
+          "score": 0.078597
+        },
+        {
+          "token": "healthy",
+          "score": 0.043749
+        },
+        {
+          "token": "water",
+          "score": 0.041151
+        },
+        {
+          "token": "streams",
+          "score": 0.034546
+        },
+        {
+          "token": "sustainable",
+          "score": 0.030586
+        },
+        {
+          "token": "8",
+          "score": 0.029718
+        },
+        {
+          "token": "water",
+          "score": 0.028685
+        },
+        {
+          "token": "streams",
+          "score": 0.026692
+        },
+        {
+          "token": "water",
+          "score": 0.024365
+        },
+        {
+          "token": "surfaces",
+          "score": 0.023036
+        }
+      ]
+    },
+    {
+      "text": "48 CHAPTER 4 PROGRESS ON GOALS AND TARGETS 4.1 Voluntary National Reviews (VNR) 2019 4.1.1 Goal 4. Quality Education The discussion of Goal 4. Quality Education will cover 4 main issues, namely: (1) Fulfilling access to education which consists of indicators of Gross Enrollment Rate at the Primary school/ Madrasah Ibtidaiah (islamic primary school)/equivalent level; junior secondary school/ Madrasah Tsanawiah (Islamic Junior Secondary School/equivalent, senior secondary school/vocational secondary school/Madrasah Aliah (Islamic Senior Secondary School)/equivalent level and tertiary level; (2) Improving the quality of teaching and learning consisting of indicators proportion of schools wit...",
+      "gold_labels": [
+        4
+      ],
+      "predicted_labels": [
+        4
+      ],
+      "top_label_scores": [
+        {
+          "label": 4,
+          "score": 0.6723
+        },
+        {
+          "label": 8,
+          "score": 0.0716
+        },
+        {
+          "label": 5,
+          "score": 0.0708
+        },
+        {
+          "label": 2,
+          "score": 0.0671
+        },
+        {
+          "label": 14,
+          "score": 0.0667
+        }
+      ],
+      "top_tokens": [
+        {
+          "token": "education",
+          "score": 0.141199
+        },
+        {
+          "token": "education",
+          "score": 0.123863
+        },
+        {
+          "token": "education",
+          "score": 0.101291
+        },
+        {
+          "token": "quality",
+          "score": 0.04695
+        },
+        {
+          "token": "quality",
+          "score": 0.039866
+        },
+        {
+          "token": "4",
+          "score": 0.03142
+        },
+        {
+          "token": "enrollment",
+          "score": 0.029445
+        },
+        {
+          "token": "4",
+          "score": 0.020236
+        },
+        {
+          "token": "4",
+          "score": 0.016628
+        },
+        {
+          "token": "4",
+          "score": 0.01538
+        },
+        {
+          "token": "national",
+          "score": 0.014839
+        },
+        {
+          "token": "goals",
+          "score": 0.014206
+        }
+      ]
+    },
+    {
+      "text": "Make cities and human settlements inclusive, safe, resilient and sustainable EU internal action Overview and challenges While European cities and communities provide opportunities for employment, economic and cultural activity, many inhabit ants face environmental and social challenges. Housing issues, pollution (air, water, noise, waste), and crime are some of the most serious challenges faced in urban areas. The EU supports transitions with the core objective of being socially inclusive, in order to leave no one and no place behind, by offering funding, capacity and knowledge-building support. Cities have an essential role to play in taking this process for ward, in innovating, investin...",
+      "gold_labels": [
+        11
+      ],
+      "predicted_labels": [
+        11
+      ],
+      "top_label_scores": [
+        {
+          "label": 11,
+          "score": 0.4788
+        },
+        {
+          "label": 10,
+          "score": 0.1084
+        },
+        {
+          "label": 8,
+          "score": 0.093
+        },
+        {
+          "label": 16,
+          "score": 0.0923
+        },
+        {
+          "label": 9,
+          "score": 0.0839
+        }
+      ],
+      "top_tokens": [
+        {
+          "token": "communities",
+          "score": 0.07362
+        },
+        {
+          "token": "settlements",
+          "score": 0.057751
+        },
+        {
+          "token": "cities",
+          "score": 0.046627
+        },
+        {
+          "token": "cities",
+          "score": 0.037331
+        },
+        {
+          "token": "safe",
+          "score": 0.036568
+        },
+        {
+          "token": "environmental",
+          "score": 0.036317
+        },
+        {
+          "token": "urban",
+          "score": 0.035486
+        },
+        {
+          "token": "human",
+          "score": 0.032368
+        },
+        {
+          "token": "##ili",
+          "score": 0.030502
+        },
+        {
+          "token": "cities",
+          "score": 0.027605
+        },
+        {
+          "token": "socially",
+          "score": 0.02568
+        },
+        {
+          "token": "employment",
+          "score": 0.02422
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "run_id": "20260507_000704",
+    "timestamp": "20260507_000704",
+    "mode": "train_eval",
+    "command": "python /home/manh/study-BHam/AI4GC-2/scripts/train.py --seeds 42 43 44 45 46 --train-sizes 1000 2000 4000 --language en --test-seed 43 --device cuda --force",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "num_labels": 17,
+    "label_names": [
+      "SDG_1",
+      "SDG_2",
+      "SDG_3",
+      "SDG_4",
+      "SDG_5",
+      "SDG_6",
+      "SDG_7",
+      "SDG_8",
+      "SDG_9",
+      "SDG_10",
+      "SDG_11",
+      "SDG_12",
+      "SDG_13",
+      "SDG_14",
+      "SDG_15",
+      "SDG_16",
+      "SDG_17"
+    ],
+    "data_dir": "/home/manh/study-BHam/AI4GC-2/data",
+    "dataset_source": "/home/manh/study-BHam/AI4GC-2/data",
+    "language": "en",
+    "train_limit": 1000,
+    "test_limit": 1470,
+    "train_rows": 1000,
+    "test_rows": 1057,
+    "epochs": 3,
+    "batch_size": 8,
+    "max_length": 128,
+    "learning_rate": 5e-05,
+    "threshold": 0.3,
+    "unfrozen_layers": 2,
+    "trainable_encoder_layers": 2,
+    "unfreeze_encoder": false,
+    "encoder_trainable_mode": "last_2_layers",
+    "trainable_params": 3555473,
+    "seed": 43,
+    "test_seed": 43,
+    "device": "cuda",
+    "run_dir": "/home/manh/study-BHam/AI4GC-2/artifacts/bert_train1000_seed43/runs/20260507_000704",
+    "checkpoint_loaded_from": null,
+    "python_version": "3.10.20 | packaged by conda-forge | (main, Mar  5 2026, 16:42:22) [GCC 14.3.0]",
+    "torch_version": "2.5.1+cu121",
+    "transformers_version": "5.8.0",
+    "sklearn_version": "1.7.2",
+    "attention_note": "Last-layer CLS attention averaged over heads; proxy explanation only.",
+    "timing": {
+      "training_time_seconds": 11.216581980999763,
+      "training_time_minutes": 0.1869430330166627
+    }
+  }
+}

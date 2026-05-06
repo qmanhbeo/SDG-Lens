@@ -1,0 +1,4 @@
+run_id,timestamp,model_name,train_limit,test_limit,epochs,threshold,unfrozen_layers,seed,micro_f1,macro_f1,average_predicted_labels,run_dir
+20260506_232443,20260506_232443,sentence-transformers/all-MiniLM-L6-v2,2000,300,3,0.3,2,44,0.6803455723542117,0.6561069315844454,1.4566666666666668,/home/manh/study-BHam/AI4GC-2/artifacts/bert_train2000_seed44/runs/20260506_232443
+20260506_234935,20260506_234935,sentence-transformers/all-MiniLM-L6-v2,2000,300,3,0.3,2,44,0.6803455723542117,0.6561069315844454,1.4566666666666668,/home/manh/study-BHam/AI4GC-2/artifacts/bert_train2000_seed44/runs/20260506_234935
+20260507_000914,20260507_000914,sentence-transformers/all-MiniLM-L6-v2,2000,1470,3,0.3,2,44,0.7009063444108762,0.6944512713983861,1.3774834437086092,/home/manh/study-BHam/AI4GC-2/artifacts/bert_train2000_seed44/runs/20260507_000914

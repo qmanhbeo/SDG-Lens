@@ -1,0 +1,53 @@
+{
+  "run_config": {
+    "method": "TF-IDF + LinearSVC",
+    "language": "en",
+    "data_dir": "/home/manh/study-BHam/AI4GC-2/data",
+    "output_dir": "/home/manh/study-BHam/AI4GC-2/artifacts/tfidf_train1000_seed42",
+    "source_train_rows": 4225,
+    "source_test_rows": 1057,
+    "train_rows": 1000,
+    "test_rows": 1057,
+    "train_limit": 1000,
+    "test_limit": 1470,
+    "max_features": 10000,
+    "alpha": 0.0001,
+    "random_state": 42,
+    "test_random_state": 43
+  },
+  "metrics": {
+    "micro_f1": 0.6217706821480407,
+    "macro_f1": 0.6227923740518796,
+    "weighted_f1": 0.6289618657119973,
+    "subset_accuracy": 0.43614001892147586
+  },
+  "per_label_f1": {
+    "SDG_1": 0.5802469135802469,
+    "SDG_2": 0.7154471544715447,
+    "SDG_3": 0.6341463414634146,
+    "SDG_4": 0.7329842931937173,
+    "SDG_5": 0.43037974683544306,
+    "SDG_6": 0.6176470588235294,
+    "SDG_7": 0.6593406593406593,
+    "SDG_8": 0.6019417475728155,
+    "SDG_9": 0.6153846153846154,
+    "SDG_10": 0.5567765567765568,
+    "SDG_11": 0.6932084309133489,
+    "SDG_12": 0.6557377049180327,
+    "SDG_13": 0.5211726384364821,
+    "SDG_14": 0.631578947368421,
+    "SDG_15": 0.6060606060606061,
+    "SDG_16": 0.6504854368932039,
+    "SDG_17": 0.684931506849315
+  },
+  "train_metrics": {
+    "micro_f1": 0.9410903768752287,
+    "macro_f1": 0.9417045554305749,
+    "weighted_f1": 0.9416247495397583,
+    "subset_accuracy": 0.874
+  },
+  "timing": {
+    "training_time_seconds": 1.5868695139997726,
+    "training_time_minutes": 0.026447825233329544
+  }
+}

@@ -1,0 +1,2 @@
+run_id,timestamp,model_name,train_limit,test_limit,epochs,threshold,unfrozen_layers,seed,micro_f1,macro_f1,average_predicted_labels,run_dir
+20260507_001008,20260507_001008,sentence-transformers/all-MiniLM-L6-v2,2000,1470,3,0.3,2,46,0.6936050597329585,0.690246922866272,1.2516556291390728,/home/manh/study-BHam/AI4GC-2/artifacts/bert_train2000_seed46/runs/20260507_001008

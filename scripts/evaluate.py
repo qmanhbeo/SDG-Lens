@@ -56,13 +56,20 @@ def require_artifacts(metas: list[dict[str, Any]], allow_missing: bool) -> None:
         raise FileNotFoundError(f"Missing required trained artifacts in artifacts/: {readable}")
 
 
+def _int_fallback(value: Any, fallback: int) -> int:
+    try:
+        return int(value) if value is not None else fallback
+    except (TypeError, ValueError):
+        return fallback
+
+
 def evaluate_bert(meta: dict[str, Any], device_name: str, allow_download: bool) -> dict[str, float]:
     device = bert_run.pick_device(device_name)
     checkpoint = bert_run.load_checkpoint(project_path(meta["paths"]["checkpoint"]), device)
     run_config = checkpoint.get("run_config", {})
     model_name = str(checkpoint.get("model_name", run_config.get("model_name")))
     language = str(meta.get("language", checkpoint.get("language", run_config.get("language", "en"))))
-    test_samples = int(meta.get("test_samples", checkpoint.get("test_limit", run_config.get("test_limit", TEST_SAMPLES))))
+    test_samples = _int_fallback(meta.get("test_samples"), _int_fallback(checkpoint.get("test_limit"), _int_fallback(run_config.get("test_limit"), 1470)))
     test_seed = int(meta.get("test_seed", checkpoint.get("test_seed", run_config.get("test_seed", TEST_SEED))))
     threshold = float(checkpoint.get("threshold", run_config.get("threshold", 0.3)))
     batch_size = int(checkpoint.get("batch_size", run_config.get("batch_size", 8)))
