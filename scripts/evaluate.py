@@ -159,12 +159,12 @@ def summarize(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             values = [float(row[metric]) for row in group_rows if row.get(metric) is not None]
             summary[f"{metric}_mean"] = mean(values)
             summary[f"{metric}_std"] = std(values)
-            summary[f"{metric}_mean_pm_std"] = f"{mean(values):.3f} +/- {std(values):.3f}"
+            summary[f"{metric}_mean_pm_std"] = f"{mean(values):.3f} $\\pm$ {std(values):.3f}"
         timing_values = [float(row["training_time_seconds"]) for row in group_rows if row.get("training_time_seconds") is not None]
         if timing_values:
             summary["training_time_seconds_mean"] = mean(timing_values)
             summary["training_time_seconds_std"] = std(timing_values)
-            summary["training_time_seconds_mean_pm_std"] = f"{mean(timing_values):.1f} +/- {std(timing_values):.1f}"
+            summary["training_time_seconds_mean_pm_std"] = f"{mean(timing_values):.1f} $\\pm$ {std(timing_values):.2f}"
         summary_rows.append(summary)
     return summary_rows
 

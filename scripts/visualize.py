@@ -141,21 +141,21 @@ def pick_best_bert_artifact() -> Path | None:
 
 def write_latex_table(rows: list[dict[str, Any]]) -> None:
     has_timing = rows and any(row.get("training_time_seconds_mean") is not None for row in rows)
-    n_cols = 6 if has_timing else 5
+    n_cols = 5 if has_timing else 4
     align = "l" + "r" * n_cols
     lines = [
         f"\\begin{{tabular}}{{{align}}}",
         "\\toprule",
-        "Model & Train Size & Seeds & Micro-F1 & Macro-F1 & Subset Acc.",
+        "Model & Train Size & Micro-F1 & Macro-F1 & Subset",
     ]
     if has_timing:
-        lines[-1] += " & Train Time (s)"
+        lines[-1] += " & Train Time"
     lines[-1] += " \\\\"
     lines.append("\\midrule")
     for row in rows:
         model_display = MODEL_DISPLAY_NAMES.get(row["model_type"], row["model_type"])
         parts = [
-            f"{model_display} & {int(row['train_size']):,} & {row['n_seeds']} &",
+            f"{model_display} & {int(row['train_size']):,} &",
             f"{row['micro_f1_mean_pm_std']} & {row['macro_f1_mean_pm_std']} &",
             f"{row['subset_accuracy_mean_pm_std']}",
         ]
@@ -171,16 +171,16 @@ def write_latex_table(rows: list[dict[str, Any]]) -> None:
 
 def write_markdown_table(rows: list[dict[str, Any]]) -> None:
     has_timing = rows and any(row.get("training_time_seconds_mean") is not None for row in rows)
-    header = "| Model | Train Size | Seeds | Micro-F1 | Macro-F1 | Weighted-F1 | Subset Acc."
-    sep = "|---|---:|---:|---:|---:|---:|---:|"
+    header = "| Model | Train Size | Micro-F1 | Macro-F1 | Weighted-F1 | Subset"
+    sep = "|---|---:|---:|---:|---:|---:|"
     if has_timing:
-        header += " | Train Time (s) |"
+        header += " | Train Time |"
         sep += "---:|"
     lines = [header, sep]
     for row in rows:
         model_display = MODEL_DISPLAY_NAMES.get(row["model_type"], row["model_type"])
         parts = [
-            f"| {model_display} | {int(row['train_size']):,} | {row['n_seeds']} |",
+            f"| {model_display} | {int(row['train_size']):,} |",
             f"{row['micro_f1_mean_pm_std']} | {row['macro_f1_mean_pm_std']} | "
             f"{row['weighted_f1_mean_pm_std']} | {row['subset_accuracy_mean_pm_std']} |",
         ]
