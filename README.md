@@ -3,43 +3,41 @@
 Multi-label classifier with attention-based explanation proxy for UN Sustainable
 Development Goals (SDGs), adapted from the HateXplain approach.
 
-## Quick Start
+## Prerequisite
 
-```bash
-# One-shot full pipeline (skips training if artifacts already exist)
-python main.py sweep
+- Python 3.10–3.12
+- Tested on WSL2 (Ubuntu) and Windows
 
-# CPU-only machines should override the default CUDA device
-python main.py sweep --device cpu
-
-# Check what the pipeline would do without running anything
-python main.py sweep --dry-run
-```
-
-## Setup
-
-Python 3.10–3.12. Tested on WSL2 (Ubuntu). Create a virtual environment and install:
-
-```bash
-pip install -r requirements.txt
-```
-
-The final compile stage also expects these system commands on `PATH`:
+The final compile stage expects these system commands on `PATH`:
 
 - `pdflatex` to compile `manuscript/sdg_lens_manuscript.tex`
-- `libreoffice` to convert `manuscript/coversheet.docx` to `coversheet.pdf`
-- `pdfunite` to merge `coversheet.pdf` and `sdg_lens_manuscript.pdf` into `sdg_lens_submission.pdf`
 
-On Ubuntu/WSL these are typically provided by TeX Live, LibreOffice, and Poppler
-utilities, for example:
+The compile step expects `manuscript/coversheet.pdf` to already exist. The
+final PDF merge uses the Python `pypdf` package on all platforms, so no
+`pdfunite` dependency is required.
+
+On Ubuntu/WSL the LaTeX toolchain is typically provided by TeX Live, for example:
 
 ```bash
 # General LaTex tools
 sudo apt install texlive-latex-base texlive-latex-extra
 # For font/margin control
 sudo apt install texlive-xetex fonts-crosextra-carlito
-# To convert Coversheet + merge
-sudo apt install libreoffice poppler-utils
+```
+
+## Setup
+
+Clone the repo:
+
+```bash
+git clone https://github.com/qmanhbeo/SDG-Lens.git
+cd SDG-Lens
+```
+
+Create a virtual environment with Python 3.10–3.12 and install:
+
+```bash
+pip install -r requirements.txt
 ```
 
 No additional data download is required. The SDGi parquet data, all trained model
@@ -47,11 +45,33 @@ checkpoints (30 BERT + 30 TF-IDF), results, and manuscript assets are included i
 the repository under `data/`, `artifacts/`, `results/`, and `manuscript/` respectively.
 The pipeline will skip training and reuse the committed artifacts automatically.
 
+## Quick Start
+
+```bash
+# One-shot full pipeline (skips training if fine-tuned checkpoint weights already exist)
+# Still needs --allow-download to fetch full model from HuggingFace into local cache
+# Can remove --allow-download after first sweep
+python main.py sweep --allow-download
+
+# If CUDA is not available on the your machine, run the same pipeline with `--device cpu`.
+python main.py sweep --device cpu
+
+# Check what the pipeline would do without running anything
+python main.py sweep --dry-run
+```
+
+To run a subset of seeds or sizes:
+
+```bash
+python main.py sweep --seeds 42 43 --train-sizes 4000
+```
+
 If you want to retrain from scratch (e.g. to modify hyperparameters), use:
 
 ```bash
 python main.py sweep --force
 ```
+
 
 ## Pipeline Stages
 
@@ -65,7 +85,7 @@ python main.py sweep --force
    from all artifacts.
 4. **visualize.py** — Generate manuscript-ready tables and charts.
 5. **compile_manuscript.py** — Compile `manuscript/sdg_lens_manuscript.tex`,
-   convert the coversheet, and merge the final submission PDF.
+   then merge the existing coversheet PDF into the final submission PDF.
 
 ## Defaults
 
@@ -78,14 +98,6 @@ python main.py sweep --force
 | Device           | cuda                   |
 | Threshold        | 0.3                    |
 
-`main.py sweep` defaults to `--device cuda`. If CUDA is not available on the
-marker machine, run the same pipeline with `--device cpu`.
-
-To run a subset of seeds or sizes:
-
-```bash
-python main.py sweep --seeds 42 43 --train-sizes 4000
-```
 
 To run stages individually:
 
@@ -101,7 +113,7 @@ python main.py compile
 
 ```
 artifacts/
-  bert_train{size}_seed{seed}/   (model checkpoint, metrics, examples)
+  bert_train{size}_seed{seed}/   (model fine-tuned checkpoint, metrics, examples)
   tfidf_train{size}_seed{seed}/  (model, metrics)
   job_status/                    (training status JSONs)
 results/
@@ -124,5 +136,4 @@ manuscript/
 - Attention tokens are proxy evidence, not validated causal explanations. SDGi
   provides SDG labels but no token-level rationale ground truth.
 - Both BERT and TF-IDF artifacts (all 30) are committed to the repository.
-  The sweep stage skips training when artifacts are present.
-- The hard word limit is 2,750. The current manuscript sits at 2,488.
+  The sweep stage skips training when fine-tuned checkpoint weights are present.

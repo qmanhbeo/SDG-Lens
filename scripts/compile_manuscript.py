@@ -9,17 +9,14 @@ This stage therefore behaves more like a reproducible build step than a bare
 from __future__ import annotations
 
 import argparse
-import os
 import shutil
 import subprocess
-import tempfile
 from pathlib import Path
 
 from pipeline_utils import MANUSCRIPT_DIR, ensure_base_dirs, rel_path, write_status
 
 
 TEX_NAME = "sdg_lens_manuscript.tex"
-COVERSHEET_DOCX = "coversheet.docx"
 COVERSHEET_PDF = "coversheet.pdf"
 SUBMISSION_PDF = "sdg_lens_submission.pdf"
 
@@ -56,59 +53,30 @@ def cleanup_latex_artifacts(manuscript_dir: Path) -> list[str]:
     return deleted
 
 
-def run_checked(command: list[str], cwd: Path, action: str, env: dict[str, str] | None = None) -> None:
-    """Run a build command and surface concise diagnostics if it fails."""
-    result = subprocess.run(command, cwd=cwd, text=True, capture_output=True, env=env)
-    if result.returncode != 0:
-        tail = "\n".join((result.stdout + "\n" + result.stderr).splitlines()[-20:])
-        raise RuntimeError(f"{action} failed with exit code {result.returncode}.\n{tail}")
-
-
 def build_submission_pdf(manuscript_dir: Path, manuscript_pdf: Path) -> Path:
-    """Convert the coversheet and merge it with the compiled manuscript PDF."""
-    coversheet_docx = manuscript_dir / COVERSHEET_DOCX
+    """Merge the existing coversheet PDF with the compiled manuscript PDF."""
     coversheet_pdf = manuscript_dir / COVERSHEET_PDF
     submission_pdf = manuscript_dir / SUBMISSION_PDF
 
-    if not coversheet_docx.exists():
-        raise FileNotFoundError(f"Missing coversheet source: {coversheet_docx}")
-    libreoffice = shutil.which("libreoffice")
-    if libreoffice is None:
-        raise RuntimeError("libreoffice was not found on PATH; cannot convert coversheet.docx to PDF.")
-    pdfunite = shutil.which("pdfunite")
-    if pdfunite is None:
-        raise RuntimeError("pdfunite was not found on PATH; cannot merge coversheet and manuscript PDFs.")
-
-    with tempfile.TemporaryDirectory(prefix="sdg-lens-libreoffice-") as tmp:
-        tmp_path = Path(tmp)
-        runtime_dir = tmp_path / "runtime"
-        runtime_dir.mkdir(mode=0o700)
-        lo_env = os.environ.copy()
-        lo_env.update({
-            "HOME": str(tmp_path),
-            "XDG_CONFIG_HOME": str(tmp_path / "config"),
-            "XDG_CACHE_HOME": str(tmp_path / "cache"),
-            "XDG_RUNTIME_DIR": str(runtime_dir),
-        })
-        user_installation = tmp_path / "profile"
-        convert_command = [
-            libreoffice,
-            "--headless",
-            f"-env:UserInstallation=file://{user_installation}",
-            "--convert-to",
-            "pdf",
-            COVERSHEET_DOCX,
-        ]
-        print(f"[compile] convert: {' '.join(convert_command)}")
-        run_checked(convert_command, cwd=manuscript_dir, action="Coversheet conversion", env=lo_env)
     if not coversheet_pdf.exists():
-        raise FileNotFoundError(f"LibreOffice completed but did not produce PDF: {coversheet_pdf}")
+        raise FileNotFoundError(f"Missing coversheet PDF: {coversheet_pdf}")
 
-    merge_command = [pdfunite, COVERSHEET_PDF, manuscript_pdf.name, SUBMISSION_PDF]
-    print(f"[compile] merge: {' '.join(merge_command)}")
-    run_checked(merge_command, cwd=manuscript_dir, action="Submission PDF merge")
+    try:
+        from pypdf import PdfWriter
+    except ImportError as exc:
+        raise RuntimeError(
+            "pypdf is required to merge coversheet and manuscript PDFs."
+        ) from exc
+    print(f"[compile] merge: pypdf {COVERSHEET_PDF} + {manuscript_pdf.name} -> {SUBMISSION_PDF}")
+    merger = PdfWriter()
+    try:
+        merger.append(str(coversheet_pdf))
+        merger.append(str(manuscript_pdf))
+        merger.write(str(submission_pdf))
+    finally:
+        merger.close()
     if not submission_pdf.exists():
-        raise FileNotFoundError(f"pdfunite completed but did not produce PDF: {submission_pdf}")
+        raise FileNotFoundError(f"Submission merge completed but did not produce PDF: {submission_pdf}")
     return submission_pdf
 
 
@@ -127,6 +95,9 @@ def main() -> int:
     tex_path = MANUSCRIPT_DIR / args.tex
     if not tex_path.exists():
         raise FileNotFoundError(f"Missing manuscript source: {tex_path}")
+    coversheet_pdf = MANUSCRIPT_DIR / COVERSHEET_PDF
+    if not coversheet_pdf.exists():
+        raise FileNotFoundError(f"Missing coversheet PDF: {coversheet_pdf}")
 
     # Check generated assets before invoking xelatex so the recovery action is
     # obvious: regenerate visualizations rather than debug a LaTeX include error.
@@ -140,10 +111,9 @@ def main() -> int:
     if xelatex is None:
         raise RuntimeError("xelatex was not found on PATH; cannot compile manuscript.")
     if args.dry_run:
-        # Dry-run still validates the TeX file, required assets, and xelatex
-        # availability, because those are the common compile blockers.
+        # Dry-run still validates the TeX file, required assets, coversheet PDF,
+        # and xelatex availability, because those are the common compile blockers.
         print(f"[compile] would compile {rel_path(tex_path)} with {xelatex}")
-        print(f"[compile] would convert {rel_path(MANUSCRIPT_DIR / COVERSHEET_DOCX)} to {COVERSHEET_PDF}")
         print(f"[compile] would merge {COVERSHEET_PDF} + {tex_path.with_suffix('.pdf').name} -> {SUBMISSION_PDF}")
         return 0
 
