@@ -8,13 +8,9 @@ Development Goals (SDGs), adapted from the HateXplain approach.
 - Python 3.10–3.12
 - Tested on WSL2 (Ubuntu) and Windows
 
-The final compile stage expects these system commands on `PATH`:
+The final compile stage expects this system command on `PATH`:
 
-- `pdflatex` to compile `manuscript/sdg_lens_manuscript.tex`
-
-The compile step expects `manuscript/coversheet.pdf` to already exist. The
-final PDF merge uses the Python `pypdf` package on all platforms, so no
-`pdfunite` dependency is required.
+- `xelatex` to compile `manuscript/sdg_lens_manuscript.tex`
 
 On Ubuntu/WSL the LaTeX toolchain is typically provided by TeX Live, for example:
 
@@ -94,8 +90,7 @@ python main.py sweep --force
 3. **evaluate.py** — Compute micro-F1, macro-F1, subset accuracy, and per-label F1
    from all artifacts.
 4. **visualize.py** — Generate manuscript-ready tables and charts.
-5. **compile_manuscript.py** — Compile `manuscript/sdg_lens_manuscript.tex`,
-   then merge the existing coversheet PDF into the final submission PDF.
+5. **compile_manuscript.py** — Compile `manuscript/sdg_lens_manuscript.tex` to PDF.
 
 ## Defaults
 
@@ -134,7 +129,6 @@ results/
 manuscript/
   sdg_lens_manuscript.tex         (source)
   sdg_lens_manuscript.pdf         (compiled)
-  sdg_lens_submission.pdf         (coversheet + compiled manuscript)
   visualization/
     charts/fig_per_label_comparison.png
     tables/evaluation_summary_table.tex

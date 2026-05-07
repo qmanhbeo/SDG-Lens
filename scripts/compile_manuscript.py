@@ -17,8 +17,6 @@ from pipeline_utils import MANUSCRIPT_DIR, ensure_base_dirs, rel_path, write_sta
 
 
 TEX_NAME = "sdg_lens_manuscript.tex"
-COVERSHEET_PDF = "coversheet.pdf"
-SUBMISSION_PDF = "sdg_lens_submission.pdf"
 
 # These files are referenced by the manuscript. Failing early with a clear list
 # is more useful than letting LaTeX stop on a missing graphic/table later.
@@ -53,33 +51,6 @@ def cleanup_latex_artifacts(manuscript_dir: Path) -> list[str]:
     return deleted
 
 
-def build_submission_pdf(manuscript_dir: Path, manuscript_pdf: Path) -> Path:
-    """Merge the existing coversheet PDF with the compiled manuscript PDF."""
-    coversheet_pdf = manuscript_dir / COVERSHEET_PDF
-    submission_pdf = manuscript_dir / SUBMISSION_PDF
-
-    if not coversheet_pdf.exists():
-        raise FileNotFoundError(f"Missing coversheet PDF: {coversheet_pdf}")
-
-    try:
-        from pypdf import PdfWriter
-    except ImportError as exc:
-        raise RuntimeError(
-            "pypdf is required to merge coversheet and manuscript PDFs."
-        ) from exc
-    print(f"[compile] merge: pypdf {COVERSHEET_PDF} + {manuscript_pdf.name} -> {SUBMISSION_PDF}")
-    merger = PdfWriter()
-    try:
-        merger.append(str(coversheet_pdf))
-        merger.append(str(manuscript_pdf))
-        merger.write(str(submission_pdf))
-    finally:
-        merger.close()
-    if not submission_pdf.exists():
-        raise FileNotFoundError(f"Submission merge completed but did not produce PDF: {submission_pdf}")
-    return submission_pdf
-
-
 def build_parser() -> argparse.ArgumentParser:
     """Build the direct-stage CLI used by the orchestrator."""
     parser = argparse.ArgumentParser(description="Compile the SDG Lens LaTeX manuscript.")
@@ -95,9 +66,6 @@ def main() -> int:
     tex_path = MANUSCRIPT_DIR / args.tex
     if not tex_path.exists():
         raise FileNotFoundError(f"Missing manuscript source: {tex_path}")
-    coversheet_pdf = MANUSCRIPT_DIR / COVERSHEET_PDF
-    if not coversheet_pdf.exists():
-        raise FileNotFoundError(f"Missing coversheet PDF: {coversheet_pdf}")
 
     # Check generated assets before invoking xelatex so the recovery action is
     # obvious: regenerate visualizations rather than debug a LaTeX include error.
@@ -111,10 +79,9 @@ def main() -> int:
     if xelatex is None:
         raise RuntimeError("xelatex was not found on PATH; cannot compile manuscript.")
     if args.dry_run:
-        # Dry-run still validates the TeX file, required assets, coversheet PDF,
-        # and xelatex availability, because those are the common compile blockers.
+        # Dry-run still validates the TeX file, required assets, and xelatex
+        # availability, because those are the common compile blockers.
         print(f"[compile] would compile {rel_path(tex_path)} with {xelatex}")
-        print(f"[compile] would merge {COVERSHEET_PDF} + {tex_path.with_suffix('.pdf').name} -> {SUBMISSION_PDF}")
         return 0
 
     command = [xelatex, "-interaction=nonstopmode", "-halt-on-error", tex_path.name]
@@ -124,7 +91,7 @@ def main() -> int:
     for pass_idx in (1, 2):
         # Two passes are enough for the simple cross-reference/table layout used
         # here and avoid adding latexmk as an extra runtime dependency.
-        print(f"[compile] pdflatex pass {pass_idx}")
+        print(f"[compile] xelatex pass {pass_idx}")
         result = subprocess.run(command, cwd=MANUSCRIPT_DIR, text=True, capture_output=True)
         stdout_log.write_text(result.stdout, encoding="utf-8")
         stderr_log.write_text(result.stderr, encoding="utf-8")
@@ -144,19 +111,9 @@ def main() -> int:
 
     print(f"[compile] wrote {rel_path(pdf_path)}")
 
-    submission_pdf = build_submission_pdf(MANUSCRIPT_DIR, pdf_path)
-    print(f"[compile] wrote {rel_path(submission_pdf)}")
-
-    # Publish status after confirming both PDFs exist so downstream checks do
-    # not mistake a failed submission merge for a completed build.
-    write_status(
-        "compile_manuscript",
-        "completed",
-        "latex",
-        pdf=rel_path(pdf_path),
-        submission_pdf=rel_path(submission_pdf),
-        log=rel_path(stdout_log),
-    )
+    # Publish status after confirming the PDF exists so downstream checks do not
+    # mistake a failed compile for a completed one.
+    write_status("compile_manuscript", "completed", "latex", pdf=rel_path(pdf_path), log=rel_path(stdout_log))
 
     # Cleanup happens after status is written; if cleanup ever fails, the PDF and
     # logs still tell the important story of the compile.

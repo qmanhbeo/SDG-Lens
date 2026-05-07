@@ -7,4 +7,3 @@ torch
 transformers
 matplotlib
 joblib
-pypdf
