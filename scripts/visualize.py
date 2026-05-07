@@ -1,3 +1,11 @@
+"""Generate manuscript-ready tables and charts from evaluation outputs.
+
+This stage is intentionally read-only with respect to model artifacts: it turns
+the CSV/JSON produced by evaluate.py into publication assets and mirrors those
+assets into the manuscript tree. Keeping reporting separate from evaluation
+makes it safe to iterate on chart/table presentation without changing metrics.
+"""
+
 from __future__ import annotations
 
 import numpy as np
@@ -25,6 +33,9 @@ from pipeline_utils import (
 )
 
 
+# Generated assets are written under outputs/ first, then copied into the
+# manuscript directory. That gives users an inspectable reporting workspace while
+# keeping the LaTeX source tree self-contained for compilation.
 TABLES_DIR = OUTPUTS_DIR / "tables"
 CHARTS_DIR = OUTPUTS_DIR / "charts"
 MANUSCRIPT_VIZ_DIR = MANUSCRIPT_DIR / "visualization"
@@ -58,6 +69,7 @@ MODEL_DISPLAY_NAMES = {
 
 
 def read_summary() -> list[dict[str, Any]]:
+    """Read the aggregate CSV that drives summary tables and metric plots."""
     path = RESULTS_DIR / "evaluation_summary.csv"
     if not path.exists():
         raise FileNotFoundError(f"Missing evaluation summary: {path}")
@@ -66,6 +78,7 @@ def read_summary() -> list[dict[str, Any]]:
 
 
 def read_summary_json() -> dict[str, Any]:
+    """Read nested evaluation output needed for per-label comparison figures."""
     path = RESULTS_DIR / "evaluation_summary.json"
     if not path.exists():
         raise FileNotFoundError(f"Missing evaluation summary JSON: {path}")
@@ -73,6 +86,7 @@ def read_summary_json() -> dict[str, Any]:
 
 
 def read_by_seed() -> list[dict[str, Any]]:
+    """Read optional per-seed rows for future report extensions."""
     path = RESULTS_DIR / "evaluation_by_seed.csv"
     if not path.exists():
         return []
@@ -81,6 +95,7 @@ def read_by_seed() -> list[dict[str, Any]]:
 
 
 def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
+    """Write a table using the first row as the stable display schema."""
     path.parent.mkdir(parents=True, exist_ok=True)
     columns = list(rows[0].keys()) if rows else []
     with path.open("w", newline="", encoding="utf-8") as f:
@@ -90,6 +105,7 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
 
 
 def short_label(label: Any, max_chars: int = 34) -> str:
+    """Shorten long labels so matplotlib tick labels stay legible."""
     label = str(label)
     if len(label) > max_chars:
         return label[:max_chars].rsplit(" ", 1)[0] + "..."
@@ -97,15 +113,18 @@ def short_label(label: Any, max_chars: int = 34) -> str:
 
 
 def sdg_label(label: int | str) -> str:
+    """Return the reader-facing SDG label with its numeric prefix."""
     label_id = int(label)
     return f"SDG {label_id}: {SDG_LABELS.get(label_id, 'Unknown')}"
 
 
 def wrapped_sdg_label(label: int | str, width: int = 22) -> str:
+    """Wrap a full SDG label for compact chart axes."""
     return textwrap.fill(sdg_label(label), width=width)
 
 
 def truncate_token(token: Any, max_chars: int = 18) -> str:
+    """Shorten WordPiece tokens for explanation charts."""
     token = str(token)
     if len(token) > max_chars:
         return token[: max_chars - 3] + "..."
@@ -113,6 +132,7 @@ def truncate_token(token: Any, max_chars: int = 18) -> str:
 
 
 def clean_display_text(text: Any) -> str:
+    """Remove control characters before placing free text into figures."""
     cleaned = []
     for char in str(text):
         if char in "\n\t":
@@ -125,6 +145,7 @@ def clean_display_text(text: Any) -> str:
 
 
 def shorten_text(text: Any, max_chars: int = 300) -> str:
+    """Trim long example text without cutting through the final word."""
     text = clean_display_text(text)
     if len(text) > max_chars:
         return text[:max_chars].rsplit(" ", 1)[0] + "..."
@@ -132,22 +153,27 @@ def shorten_text(text: Any, max_chars: int = 300) -> str:
 
 
 def wrap_text(text: Any, width: int = 48) -> str:
+    """Wrap text blocks for fixed-width matplotlib annotation areas."""
     return textwrap.fill(str(text), width=width)
 
 
 def pick_best_bert_artifact() -> Path | None:
+    """Pick the most relevant BERT results file for single-model diagnostic charts."""
     candidates = sorted(
         ARTIFACTS_DIR.glob("bert_train*_seed42/results.json"),
         key=lambda p: int(p.parent.name.split("_train")[1].split("_")[0]),
         reverse=True,
     )
     if candidates:
+        # Prefer the largest seed-42 BERT run because it is stable across the
+        # committed sweep and best represents the headline neural model.
         return candidates[0]
     all_bert = sorted(ARTIFACTS_DIR.glob("bert_train*_seed*/results.json"))
     return all_bert[0] if all_bert else None
 
 
 def write_latex_table(rows: list[dict[str, Any]]) -> None:
+    """Write the compact LaTeX table included by the manuscript."""
     has_timing = rows and any(row.get("training_time_seconds_mean") is not None for row in rows)
     n_cols = 5 if has_timing else 4
     align = "l" + "r" * n_cols
@@ -162,6 +188,8 @@ def write_latex_table(rows: list[dict[str, Any]]) -> None:
     lines.append("\\midrule")
     for row in rows:
         model_display = MODEL_DISPLAY_NAMES.get(row["model_type"], row["model_type"])
+        # Use the preformatted mean +/- std strings from evaluate.py so table
+        # precision stays consistent across Markdown, CSV, and LaTeX views.
         parts = [
             f"{model_display} & {int(row['train_size']):,} &",
             f"{row['micro_f1_mean_pm_std']} & {row['macro_f1_mean_pm_std']} &",
@@ -178,6 +206,7 @@ def write_latex_table(rows: list[dict[str, Any]]) -> None:
 
 
 def write_markdown_table(rows: list[dict[str, Any]]) -> None:
+    """Write a quick human-readable version of the evaluation table."""
     has_timing = rows and any(row.get("training_time_seconds_mean") is not None for row in rows)
     header = "| Model | Train Size | Micro-F1 | Macro-F1 | Weighted-F1 | Subset Acc."
     sep = "|---|---:|---:|---:|---:|---:|"
@@ -201,6 +230,7 @@ def write_markdown_table(rows: list[dict[str, Any]]) -> None:
 
 
 def write_csv_table(rows: list[dict[str, Any]]) -> None:
+    """Write a display-oriented CSV copy of the summary table."""
     display_rows = []
     for row in rows:
         r = dict(row)
@@ -210,8 +240,11 @@ def write_csv_table(rows: list[dict[str, Any]]) -> None:
 
 
 def write_threshold_sweep_table(out_dir: Path) -> None:
+    """Convert threshold-sweep JSON into the LaTeX table used by the report."""
     path = RESULTS_DIR / "threshold_sweep.json"
     if not path.exists():
+        # Evaluation may be run in a partial mode. Missing sweep data should not
+        # prevent other visualizations from being generated.
         return
     sweep = json.loads(path.read_text(encoding="utf-8"))
     lines = [
@@ -226,6 +259,8 @@ def write_threshold_sweep_table(out_dir: Path) -> None:
         avg_true = row["avg_true_labels"]
         micro = row["micro_f1"]
         zero_pct = row["fraction_zero_predictions"] * 100
+        # Mark the training/evaluation default so readers can connect the sweep
+        # table back to the reported headline metrics.
         marker = " *" if thresh == 0.3 else ""
         zero_pct_latex = f"{zero_pct:.1f}"
         lines.append(
@@ -237,12 +272,15 @@ def write_threshold_sweep_table(out_dir: Path) -> None:
 
 
 def plot_metric(rows: list[dict[str, Any]], metric: str, title: str, path: Path) -> None:
+    """Plot mean metric values with seed-level standard-deviation error bars."""
     ordered = sorted(rows, key=lambda row: (int(row["train_size"]), row["model_type"]))
     labels = [f"{MODEL_DISPLAY_NAMES.get(row['model_type'], row['model_type'])[:18]} {int(row['train_size']) // 1000}k" for row in ordered]
     means = [float(row[f"{metric}_mean"]) for row in ordered]
     errs = [float(row[f"{metric}_std"]) for row in ordered]
     colors = ["#386cb0" if row["model_type"] == "bert" else "#7fc97f" for row in ordered]
 
+    # Keep the figure format stable for manuscript inclusion: fixed size, fixed
+    # y-axis range, and value labels for readers comparing small differences.
     fig, ax = plt.subplots(figsize=(8, 4.5))
     ax.bar(labels, means, yerr=errs, capsize=5, color=colors, edgecolor="#333333", linewidth=0.8)
     ax.set_ylim(0, 1.0)
@@ -259,6 +297,7 @@ def plot_metric(rows: list[dict[str, Any]], metric: str, title: str, path: Path)
 
 
 def save_metrics_figure(metrics: dict[str, Any], out_dir: Path) -> Path:
+    """Create a single-artifact aggregate metric figure for diagnostics."""
     names = ["micro_f1", "macro_f1", "weighted_f1", "subset_accuracy"]
     labels = ["Micro-F1", "Macro-F1", "Weighted-F1", "Subset Acc."]
     values = [float(metrics.get(name, 0.0) or 0.0) for name in names]
@@ -279,12 +318,15 @@ def save_metrics_figure(metrics: dict[str, Any], out_dir: Path) -> Path:
 
 
 def save_per_label_figure(metrics: dict[str, Any], out_dir: Path) -> Path:
+    """Create a single-artifact per-SDG F1 figure."""
     per_label = metrics.get("per_label_f1", {})
     labels = list(range(1, 18))
     values = [float(per_label.get(str(label), 0.0) or 0.0) for label in labels]
 
     fig, ax = plt.subplots(figsize=(11, 5))
     colors = ["#4e9a06" if value >= 0.6 else "#c17d11" if value >= 0.3 else "#a40000" for value in values]
+    # Color bands are only a visual diagnostic for weak/medium/strong labels;
+    # the exact numeric bars remain the source of truth.
     ax.bar([str(label) for label in labels], values, color=colors)
     ax.set_ylim(0, 1.0)
     ax.set_xlabel("SDG label")
@@ -301,6 +343,7 @@ def save_per_label_figure(metrics: dict[str, Any], out_dir: Path) -> Path:
 
 
 def save_per_label_comparison_figure(evaluation_summary: dict[str, Any], out_dir: Path) -> Path | None:
+    """Compare BERT and TF-IDF per-label F1 at the 4,000-example condition."""
     summary = evaluation_summary.get("summary", [])
     bert_4k = next((r for r in summary if r["model_type"] == "bert" and r["train_size"] == 4000), None)
     tfidf_4k = next((r for r in summary if r["model_type"] == "tfidf" and r["train_size"] == 4000), None)
@@ -310,6 +353,8 @@ def save_per_label_comparison_figure(evaluation_summary: dict[str, Any], out_dir
     bert_pl = bert_4k.get("per_label_f1", {})
     tfidf_pl = tfidf_4k.get("per_label_f1", {})
     if not bert_pl or not tfidf_pl:
+        # Older summary files may not include nested per-label metrics. In that
+        # case the rest of the visualization stage can still complete.
         return None
 
     labels = list(range(1, 18))
@@ -344,6 +389,7 @@ def save_per_label_comparison_figure(evaluation_summary: dict[str, Any], out_dir
 
 
 def save_examples_figure(examples: list[dict[str, Any]], out_dir: Path, n_examples: int = 5) -> Path:
+    """Render held-out examples with predicted labels and attention-token scores."""
     picked = examples[:n_examples]
     if not picked:
         raise ValueError("No examples available for explanation figure.")
@@ -370,6 +416,8 @@ def save_examples_figure(examples: list[dict[str, Any]], out_dir: Path, n_exampl
         quality = example.get("example_quality")
         title = f"Example {row_idx}" + (f" ({quality})" if quality else "")
         excerpt = wrap_text(shorten_text(example.get("text", ""), max_chars=180), width=36)
+        # The left panel gives enough source text to interpret the labels, while
+        # the two right panels expose model scores without claiming causality.
         text_ax.axis("off")
         text_ax.text(
             0.0, 1.0, f"{title}\nGold: {gold}\nPred: {pred}\n\n{excerpt}",
@@ -377,6 +425,8 @@ def save_examples_figure(examples: list[dict[str, Any]], out_dir: Path, n_exampl
         )
 
         label_scores = list(example.get("top_label_scores", []))[:5]
+        # Showing only the top labels keeps the figure readable; full label
+        # metrics are available in the JSON artifacts.
         score_names = [short_label(wrapped_sdg_label(item["label"], width=22)) for item in label_scores]
         score_values = [float(item["score"]) for item in label_scores]
         score_y = list(range(len(score_names)))
@@ -392,6 +442,8 @@ def save_examples_figure(examples: list[dict[str, Any]], out_dir: Path, n_exampl
             scores_ax.text(min(value + 0.015, 0.97), y_pos, f"{value:.2f}", va="center", fontsize=7.8)
 
         top_tokens = list(example.get("top_tokens", []))[:5]
+        # Attention is displayed as a proxy signal. It is intentionally labelled
+        # as attended tokens rather than ground-truth rationales.
         token_names = [truncate_token(item["token"]) for item in top_tokens]
         token_scores = [float(item["score"]) for item in top_tokens]
         max_score = max(token_scores) if token_scores else 1.0
@@ -422,9 +474,12 @@ def save_examples_figure(examples: list[dict[str, Any]], out_dir: Path, n_exampl
 
 
 def mirror_to_manuscript() -> None:
+    """Copy generated report assets into the LaTeX manuscript tree."""
     MANUSCRIPT_TABLES_DIR.mkdir(parents=True, exist_ok=True)
     MANUSCRIPT_CHARTS_DIR.mkdir(parents=True, exist_ok=True)
 
+    # Copy rather than symlink so the manuscript directory remains portable in
+    # zip submissions or environments that do not preserve symlinks.
     for name in ["evaluation_summary_table.tex", "threshold_sweep_table.tex"]:
         src = TABLES_DIR / name
         if src.exists():
@@ -445,15 +500,19 @@ def mirror_to_manuscript() -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build the visualization CLI used by main.py and standalone runs."""
     parser = argparse.ArgumentParser(description="Generate manuscript-ready SDG Lens tables and charts.")
     parser.add_argument("--dry-run", action="store_true")
     return parser
 
 
 def main() -> int:
+    """Generate all tables/charts that can be produced from current results."""
     args = build_parser().parse_args()
     ensure_base_dirs()
     if args.dry_run:
+        # Dry-run verifies directory resolution but avoids touching charts or
+        # manuscript assets.
         print(f"[visualize] would read {rel_path(RESULTS_DIR)} and write {rel_path(OUTPUTS_DIR)}")
         return 0
 
@@ -464,6 +523,8 @@ def main() -> int:
     TABLES_DIR.mkdir(parents=True, exist_ok=True)
     CHARTS_DIR.mkdir(parents=True, exist_ok=True)
 
+    # Summary outputs are cheap and deterministic, so write all three table
+    # formats every time visualization runs.
     write_latex_table(rows)
     write_csv_table(rows)
     write_markdown_table(rows)
@@ -488,6 +549,8 @@ def main() -> int:
     else:
         print(f"[visualize] using BERT artifact: {rel_path(bert_results_path)}")
         try:
+            # BERT-specific figures are optional diagnostics. A malformed legacy
+            # result should warn, not block summary table/chart generation.
             bert_results = json.loads(bert_results_path.read_text(encoding="utf-8"))
             metrics = bert_results.get("metrics", {})
             examples = bert_results.get("examples", [])

@@ -1,3 +1,11 @@
+"""Evaluate saved BERT and TF-IDF artifacts on the shared SDGi test contract.
+
+Training stages write artifact metadata; this stage treats that metadata as the
+source of truth, reloads each model, recomputes predictions, and publishes both
+per-seed and aggregated metrics. Re-evaluating from artifacts keeps the reported
+results tied to files that can actually be inspected or reused.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -36,14 +44,18 @@ import baseline
 import train as bert_run
 
 
+# Keep the aggregate metric list in one place so CSV, Markdown, and JSON outputs
+# remain column-compatible as the reporting code evolves.
 METRIC_NAMES = ["micro_f1", "macro_f1", "weighted_f1", "subset_accuracy"]
 
 
 def mean(values: list[float]) -> float:
+    """Return zero for empty groups so partial dry/evaluation runs still serialize."""
     return sum(values) / len(values) if values else 0.0
 
 
 def std(values: list[float]) -> float:
+    """Sample standard deviation across seeds for manuscript-ready summaries."""
     if len(values) < 2:
         return 0.0
     avg = mean(values)
@@ -51,10 +63,12 @@ def std(values: list[float]) -> float:
 
 
 def predictions_from_probs(probs: np.ndarray, threshold: float) -> np.ndarray:
+    """Convert independent label probabilities into a binary prediction matrix."""
     return (probs >= threshold).astype(np.int64)
 
 
 def run_threshold_sweep(probs: np.ndarray, y_true: np.ndarray) -> list[dict[str, Any]]:
+    """Measure how the multi-label threshold changes label density and micro-F1."""
     sweep_results = []
     for thresh in [0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5]:
         y_pred = predictions_from_probs(probs, thresh)
@@ -73,6 +87,7 @@ def run_threshold_sweep(probs: np.ndarray, y_true: np.ndarray) -> list[dict[str,
 
 
 def require_artifacts(metas: list[dict[str, Any]], allow_missing: bool) -> None:
+    """Fail early when the expected model/size/seed grid is incomplete."""
     found = {(meta["model_type"], int(meta["train_size"]), int(meta["seed"])) for meta in metas}
     missing = [item for item in required_conditions() if item not in found]
     if missing and not allow_missing:
@@ -81,6 +96,7 @@ def require_artifacts(metas: list[dict[str, Any]], allow_missing: bool) -> None:
 
 
 def _int_fallback(value: Any, fallback: int) -> int:
+    """Coerce legacy metadata values while preserving a known-good fallback."""
     try:
         return int(value) if value is not None else fallback
     except (TypeError, ValueError):
@@ -88,9 +104,14 @@ def _int_fallback(value: Any, fallback: int) -> int:
 
 
 def evaluate_bert(meta: dict[str, Any], device_name: str, allow_download: bool) -> dict[str, float]:
+    """Reload one saved BERT checkpoint and evaluate it on its recorded test split."""
     device = bert_run.pick_device(device_name)
     checkpoint = bert_run.load_checkpoint(project_path(meta["paths"]["checkpoint"]), device)
     run_config = checkpoint.get("run_config", {})
+
+    # Older artifacts have slightly different metadata keys. Pull values from
+    # artifact.json, then checkpoint top-level fields, then run_config so all
+    # committed checkpoints remain evaluable.
     model_name = str(checkpoint.get("model_name", run_config.get("model_name")))
     language = str(meta.get("language", checkpoint.get("language", run_config.get("language", "en"))))
     test_samples = _int_fallback(meta.get("test_samples"), _int_fallback(checkpoint.get("test_limit"), _int_fallback(run_config.get("test_limit"), 1470)))
@@ -101,6 +122,8 @@ def evaluate_bert(meta: dict[str, Any], device_name: str, allow_download: bool) 
     trainable_layers = int(checkpoint.get("trainable_encoder_layers", checkpoint.get("unfrozen_layers", 2)))
     unfreeze_encoder = bool(checkpoint.get("unfreeze_encoder", run_config.get("unfreeze_encoder", False)))
 
+    # Recreate the exact model/tokenizer pairing before loading weights. The
+    # architecture configuration determines the state_dict keys that follow.
     test_frame = bert_run.load_sdgi_split(DATA_DIR, "test", language, test_samples, test_seed)
     tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, local_files_only=not allow_download)
     model = bert_run.BertMultiLabelAttentionClassifier(
@@ -122,6 +145,7 @@ def evaluate_bert(meta: dict[str, Any], device_name: str, allow_download: bool) 
 
 
 def evaluate_tfidf(meta: dict[str, Any]) -> dict[str, Any]:
+    """Reload one saved TF-IDF baseline and evaluate it on its recorded test split."""
     model_payload = joblib.load(project_path(meta["paths"]["model"]))
     language = str(meta.get("language", "en"))
     seed = int(meta["seed"])
@@ -133,6 +157,8 @@ def evaluate_tfidf(meta: dict[str, Any]) -> dict[str, Any]:
     y_test = model_payload["binarizer"].transform(test_df["labels"].tolist())
     x_test = model_payload["vectorizer"].transform(x_test_texts)
 
+    # The baseline stores one classifier per label. Placeholder None values mean
+    # the training slice was degenerate for that label, so evaluation predicts 0.
     y_pred = np.zeros_like(y_test)
     for idx, clf in enumerate(model_payload["models"]):
         if clf is None:
@@ -145,6 +171,10 @@ def evaluate_tfidf(meta: dict[str, Any]) -> dict[str, Any]:
         str(label): float(score)
         for label, score in zip(baseline.SDG_IDS, f1_score(y_test, y_pred, average=None, zero_division=0).tolist())
     }
+
+    # SGDClassifier exposes margins rather than probabilities. A sigmoid over
+    # decision_function scores is sufficient for threshold-sweep diagnostics,
+    # not for calibrated probability claims.
     probs = np.zeros_like(y_test, dtype=np.float64)
     for idx, clf in enumerate(model_payload["models"]):
         if clf is None:
@@ -156,6 +186,7 @@ def evaluate_tfidf(meta: dict[str, Any]) -> dict[str, Any]:
 
 
 def row_from_metrics(meta: dict[str, Any], metrics: dict[str, Any]) -> dict[str, Any]:
+    """Flatten one artifact's metrics into a CSV-friendly row."""
     row = {
         "model_type": meta["model_type"],
         "train_size": int(meta["train_size"]),
@@ -174,6 +205,7 @@ def row_from_metrics(meta: dict[str, Any], metrics: dict[str, Any]) -> dict[str,
 
 
 def write_csv(path, rows: list[dict[str, Any]], columns: list[str]) -> None:
+    """Write rows with an explicit column order for stable downstream tables."""
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=columns)
@@ -183,6 +215,7 @@ def write_csv(path, rows: list[dict[str, Any]], columns: list[str]) -> None:
 
 
 def summarize(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Aggregate per-seed rows into mean/std summaries by model and train size."""
     groups: dict[tuple[str, int], list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
         groups[(row["model_type"], int(row["train_size"]))].append(row)
@@ -208,6 +241,8 @@ def summarize(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             summary["training_time_seconds_mean_pm_std"] = f"{mean(timing_values):.1f} $\\pm$ {std(timing_values):.2f}"
         per_label_groups = [row.get("per_label_f1") for row in group_rows if row.get("per_label_f1")]
         if per_label_groups:
+            # Preserve per-label averages in JSON so visualize.py can build the
+            # BERT-vs-TF-IDF comparison figure without reparsing by-seed rows.
             mean_per_label = {}
             all_labels = list(per_label_groups[0].keys())
             for label in all_labels:
@@ -219,6 +254,7 @@ def summarize(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def write_markdown(path, summary_rows: list[dict[str, Any]]) -> None:
+    """Write a lightweight human-readable summary next to the machine outputs."""
     lines = [
         "# Evaluation Summary",
         "",
@@ -241,6 +277,7 @@ def write_markdown(path, summary_rows: list[dict[str, Any]]) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build the evaluation CLI used by main.py and standalone runs."""
     parser = argparse.ArgumentParser(description="Evaluate trained SDG Lens artifacts.")
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--allow-download", action="store_true")
@@ -250,6 +287,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> int:
+    """Evaluate discovered artifacts and publish summary files."""
     args = build_parser().parse_args()
     ensure_base_dirs()
     metas = load_artifact_metadata()
@@ -258,10 +296,14 @@ def main() -> int:
     except FileNotFoundError as exc:
         raise SystemExit(f"[evaluate] {exc}") from exc
     if args.dry_run:
+        # A dry run still verifies the artifact grid unless --allow-missing was
+        # passed, which catches missing training outputs before a long reload.
         print(f"[evaluate] would evaluate {len(metas)} artifacts -> {rel_path(RESULTS_DIR)}")
         return 0
 
     rows: list[dict[str, Any]] = []
+    # Accumulators retain raw probabilities/labels so threshold sweeps are run
+    # on pooled examples rather than on already-rounded per-artifact metrics.
     sweep_accumulator: list[tuple[np.ndarray, np.ndarray]] = []
     sweep_bert4k_accumulator: list[tuple[np.ndarray, np.ndarray]] = []
     write_status("evaluate", "running", "evaluation", progress={"completed": 0, "total": len(metas)})
@@ -276,10 +318,14 @@ def main() -> int:
         rows.append(row_from_metrics(meta, metrics))
         sweep_accumulator.append((probs, y_true))
         if meta["model_type"] == "bert" and int(meta["train_size"]) == 4000:
+            # The manuscript highlights the final 4k BERT condition, so publish
+            # a dedicated threshold sweep for that model subset as well.
             sweep_bert4k_accumulator.append((probs, y_true))
         write_status("evaluate", "running", "evaluation", progress={"completed": idx, "total": len(metas)})
 
     summary_rows = summarize(rows)
+    # Keep file formats complementary: CSV for tables, JSON for nested per-label
+    # values, and Markdown for quick inspection in the repository.
     by_seed_columns = ["model_type", "train_size", "seed", "artifact_id", "artifact_dir", *METRIC_NAMES]
     summary_columns = ["model_type", "train_size", "condition", "n_seeds", "seeds"]
     for metric in METRIC_NAMES:

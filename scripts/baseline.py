@@ -1,3 +1,12 @@
+"""TF-IDF baseline training for SDG Lens.
+
+This script provides a deliberately simple comparison point for the BERT model:
+bag-of-words style features, one linear classifier per SDG label, and the same
+train/test sampling contract used by the neural pipeline. The goal is not to
+maximize baseline complexity; it is to make the neural model's gain measurable
+against a transparent and reproducible reference.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -19,23 +28,33 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import f1_score
 from sklearn.preprocessing import MultiLabelBinarizer
 
+# Linear SVM-style optimization can emit convergence warnings on small or
+# imbalanced label slices. The persisted metrics are the contract here, so the
+# warning is suppressed to keep marker-facing logs readable.
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
 HERE = Path(__file__).resolve().parent
 PROJECT_ROOT = HERE.parent
 DEFAULT_DATA_DIR = PROJECT_ROOT / "data"
+
+# SDGi labels are stored as 1-based SDG identifiers. Internal matrices keep one
+# column per SDG in the same order so metrics can be mapped back to label names.
 SDG_IDS = list(range(1, 18))
 SDG_NAMES = [f"SDG_{i}" for i in SDG_IDS]
 
 
 def set_seed(seed: int) -> None:
+    """Seed Python and NumPy so text shuffling and model initialization repeat."""
     random.seed(seed)
     np.random.seed(seed)
 
 
 def preprocess_text(text: str) -> str:
+    """Normalize text for sparse lexical features while preserving word signal."""
     if text is None:
         return ""
+    # Numbers can be topical but exact values are usually too sparse; replacing
+    # them gives the linear baseline a reusable numeric signal.
     text = re.sub(r"(\b\d+[\.,]?\d*\b)", "NUM", str(text))
     text = text.translate(str.maketrans("", "", string.punctuation))
     text = re.sub(r"\s+", " ", text)
@@ -48,12 +67,15 @@ def load_sdgi_parquet(
     random_state: int = 42,
     test_random_state: int | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Load SDGi train/test parquet files and apply the shared language split."""
     train_path = data_dir / "train-00000-of-00001.parquet"
     test_path = data_dir / "test-00000-of-00001.parquet"
     train_df = pd.read_parquet(train_path)
     test_df = pd.read_parquet(test_path)
 
     if language not in {"xx", "all"}:
+        # The HuggingFace-style metadata column stores the language; filtering
+        # here keeps BERT and TF-IDF trained on the same subset.
         def get_lang(row) -> str:
             m = row.get("metadata") or {}
             return m.get("language", "")
@@ -61,6 +83,8 @@ def load_sdgi_parquet(
         train_df = train_df[train_df.apply(get_lang, axis=1) == language]
         test_df = test_df[test_df.apply(get_lang, axis=1) == language]
 
+    # Shuffle before taking head() limits later so each seed defines a stable
+    # but different experimental subset.
     train_df = train_df.sample(frac=1, random_state=random_state).reset_index(drop=True)
     test_df = test_df.sample(
         frac=1,
@@ -71,6 +95,7 @@ def load_sdgi_parquet(
 
 
 def evaluate_predictions(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, float]:
+    """Compute the same aggregate metrics reported by the BERT pipeline."""
     return {
         "micro_f1": float(f1_score(y_true, y_pred, average="micro", zero_division=0)),
         "macro_f1": float(f1_score(y_true, y_pred, average="macro", zero_division=0)),
@@ -90,6 +115,7 @@ def run_tfidf_baseline(
     train_limit: int | None = None,
     test_limit: int | None = None,
 ) -> dict[str, Any]:
+    """Train and persist the sparse one-vs-rest SDG baseline."""
     set_seed(random_state)
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -102,13 +128,19 @@ def run_tfidf_baseline(
     if test_limit:
         test_df = test_df.head(test_limit)
 
+    # Preprocess before vectorization so saved vectorizer vocabulary matches the
+    # exact normalization used at evaluation time.
     x_train_texts = np.asarray([preprocess_text(t) for t in train_df["text"]], dtype=object)
     x_test_texts = np.asarray([preprocess_text(t) for t in test_df["text"]], dtype=object)
 
+    # MultiLabelBinarizer turns lists such as [3, 13] into the fixed 17-column
+    # indicator matrix expected by sklearn metrics and one-vs-rest training.
     binarizer = MultiLabelBinarizer(classes=SDG_IDS)
     y_train = binarizer.fit_transform(train_df["labels"].tolist())
     y_test = binarizer.transform(test_df["labels"].tolist())
 
+    # Binary TF-IDF intentionally behaves closer to a keyword baseline: repeated
+    # terms matter less than whether a signal appears in the document at all.
     vectorizer = TfidfVectorizer(
         strip_accents="ascii",
         lowercase=False,
@@ -126,6 +158,9 @@ def run_tfidf_baseline(
     for i in range(17):
         y_col = y_train[:, i]
         if len(np.unique(y_col)) < 2:
+            # Very small training subsets can contain only negatives or only
+            # positives for a rare SDG. Store a placeholder so column positions
+            # stay aligned with the 17-label contract.
             models.append(None)
             continue
         clf = SGDClassifier(
@@ -148,6 +183,8 @@ def run_tfidf_baseline(
     y_test_pred = np.zeros_like(y_test)
     for i, clf in enumerate(models):
         if clf is None:
+            # Match the constant class seen during training for degenerate
+            # labels instead of dropping the label column entirely.
             y_train_pred[:, i] = y_train[0, i]
             y_test_pred[:, i] = y_train[0, i]
         else:
@@ -161,6 +198,9 @@ def run_tfidf_baseline(
     for i, name in enumerate(SDG_NAMES):
         per_label_f1[name] = float(f1_score(y_test[:, i], y_test_pred[:, i], zero_division=0))
 
+    # Persist both a readable JSON report and the full sklearn payload. The JSON
+    # feeds evaluation summaries; the joblib file is needed to reproduce
+    # predictions from exactly the trained vectorizer and per-label models.
     output = {
         "run_config": {
             "method": "TF-IDF + LinearSVC",
@@ -202,7 +242,8 @@ def run_tfidf_baseline(
     return output
 
 
-# Marker-facing baseline stage orchestration.
+# Marker-facing baseline stage orchestration. The functions above implement the
+# reusable model logic; the block below adapts it to the repository artifact grid.
 from pipeline_utils import (
     ARTIFACTS_DIR,
     DATA_DIR,
@@ -223,6 +264,7 @@ from pipeline_utils import (
 )
 
 def artifact_complete(train_size: int, seed: int) -> bool:
+    """Return True only when metadata and the files it points to all exist."""
     meta_path = artifact_metadata_path("tfidf", train_size, seed)
     if not meta_path.exists():
         return False
@@ -233,9 +275,12 @@ def artifact_complete(train_size: int, seed: int) -> bool:
 
 
 def train_one(args: argparse.Namespace, train_size: int, seed: int) -> dict[str, Any]:
+    """Train or reuse one TF-IDF artifact for a size/seed condition."""
     out_dir = artifact_dir("tfidf", train_size, seed)
     meta_path = artifact_metadata_path("tfidf", train_size, seed)
     if artifact_complete(train_size, seed) and not args.force:
+        # Reusing committed artifacts keeps the default sweep fast and prevents
+        # accidental metric drift unless the caller explicitly asks for --force.
         print(f"[baseline] skip existing tfidf train={train_size} seed={seed}")
         return read_json(meta_path)
 
@@ -260,6 +305,8 @@ def train_one(args: argparse.Namespace, train_size: int, seed: int) -> dict[str,
     if not model_path.exists():
         raise FileNotFoundError(f"TF-IDF training did not create model artifact: {model_path}")
 
+    # The artifact.json file is the handoff contract consumed by evaluate.py.
+    # Keep paths relative so the artifact directory can move with the repo.
     meta = {
         "schema_version": 1,
         "model_type": "tfidf",
@@ -284,6 +331,7 @@ def train_one(args: argparse.Namespace, train_size: int, seed: int) -> dict[str,
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build the direct-stage CLI used by main.py and standalone runs."""
     parser = argparse.ArgumentParser(description="Train TF-IDF SDG Lens artifacts.")
     parser.add_argument("--seeds", nargs="+", type=int, default=SEEDS)
     parser.add_argument("--train-sizes", nargs="+", type=int, default=TRAIN_SIZES)
@@ -298,8 +346,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> int:
+    """Run the requested TF-IDF artifact grid and publish progress status."""
     args = build_parser().parse_args()
     if args.dry_run:
+        # Dry runs still call train_one so skip/retrain decisions are visible.
         for train_size in args.train_sizes:
             for seed in args.seeds:
                 train_one(args, train_size, seed)
@@ -314,6 +364,8 @@ def main() -> int:
         for seed in args.seeds:
             train_one(args, train_size, seed)
             completed += 1
+            # Status is updated after every artifact so interrupted sweeps can
+            # be inspected without reading the whole terminal log.
             write_status("baseline", "running", "tfidf_training", progress={"completed": completed, "total": total})
     write_status("baseline", "completed", "tfidf_training", progress={"completed": completed, "total": total})
     print("[baseline] done")

@@ -1,9 +1,17 @@
-# Minimal SDGi explainability prototype, upgraded for better signal:
-# - train on a larger default subset for a few epochs
-# - fine-tune only the last transformer layers instead of the whole encoder
-# - use a lower multi-label prediction threshold
-# Still simplified: no scheduler, no config files, no checkpointing, and
-# attention remains a proxy explanation without SDGi rationale ground truth.
+"""BERT-based SDG Lens training and artifact production.
+
+This file contains two layers:
+
+1. A reusable SDGi multi-label classifier prototype with an attention-based
+   explanation proxy.
+2. A marker-facing stage wrapper that trains or reuses artifacts for a
+   seed/size sweep consumed by evaluate.py.
+
+The prototype is intentionally modest: it trains on bounded subsets, fine-tunes
+only the last transformer layers by default, uses a lower multi-label threshold,
+and does not claim attention is a validated causal rationale because SDGi has no
+token-level explanation ground truth.
+"""
 
 from __future__ import annotations
 
@@ -33,10 +41,15 @@ from transformers import AutoConfig, AutoModel, AutoTokenizer
 SDG_IDS = list(range(1, 18))
 SDG_NAMES = {idx: f"SDG_{idx}" for idx in SDG_IDS}
 LABEL_NAMES = [SDG_NAMES[idx] for idx in SDG_IDS]
+
+# Paths in this prototype are relative to scripts/ for backward compatibility
+# with earlier runs, while the stage wrapper later maps them into repo artifacts.
 HERE = Path(__file__).resolve().parent
 PROJECT_ROOT = HERE.parent
 DEFAULT_DATA_DIR = PROJECT_ROOT / "data"
 
+# Conservative defaults keep the script runnable on modest local hardware while
+# still producing useful signal for a course submission.
 TRAIN_LIMIT = 2000
 TEST_LIMIT = 1470
 DEFAULT_EPOCHS = 3
@@ -46,13 +59,19 @@ TRAINABLE_ENCODER_LAYERS = 2
 
 @dataclass
 class ModelOutput:
+    """Small return object so loss, logits, and optional attention stay together."""
+
     loss: torch.Tensor | None
     logits: torch.Tensor
     attention_scores: torch.Tensor | None
 
 
 class SDGiDataset(Dataset):
+    """Torch dataset that converts SDGi rows into cleaned text and label vectors."""
+
     def __init__(self, frame: pd.DataFrame):
+        # Clean once at dataset construction so tokenization batches do not keep
+        # repeating simple text normalization.
         self.texts = [clean_text(text) for text in frame["text"].tolist()]
         self.labels = np.stack([labels_to_vector(labels) for labels in frame["labels"]])
 
@@ -67,6 +86,8 @@ class SDGiDataset(Dataset):
 
 
 class BertMultiLabelAttentionClassifier(nn.Module):
+    """Transformer encoder plus one multi-label classification head."""
+
     def __init__(
         self,
         model_name: str,
@@ -76,12 +97,17 @@ class BertMultiLabelAttentionClassifier(nn.Module):
         unfreeze_encoder: bool = False,
     ) -> None:
         super().__init__()
+        # Request attentions in the config so explanation extraction can use the
+        # same model class as training/evaluation.
         config = AutoConfig.from_pretrained(
             model_name,
             local_files_only=local_files_only,
             output_attentions=True,
         )
         if hasattr(config, "_attn_implementation"):
+            # Some transformer versions default to optimized attention kernels
+            # that do not expose attention weights. Eager attention is slower but
+            # preserves the explanation proxy.
             config._attn_implementation = "eager"
         try:
             self.encoder = AutoModel.from_pretrained(
@@ -91,6 +117,8 @@ class BertMultiLabelAttentionClassifier(nn.Module):
                 attn_implementation="eager",
             )
         except TypeError:
+            # Older transformers releases do not accept attn_implementation as
+            # a from_pretrained argument; the config setting above is enough.
             self.encoder = AutoModel.from_pretrained(
                 model_name,
                 config=config,
@@ -102,11 +130,14 @@ class BertMultiLabelAttentionClassifier(nn.Module):
 
         hidden = self.encoder.config.hidden_size
         dropout_prob = getattr(self.encoder.config, "hidden_dropout_prob", 0.1)
+        # A single linear head is enough for independent SDG labels because the
+        # loss below treats each label as a separate binary decision.
         self.dropout = nn.Dropout(dropout_prob)
         self.classifier = nn.Linear(hidden, num_labels)
         self.loss_fn = nn.BCEWithLogitsLoss()
 
     def _set_encoder_trainability(self) -> str:
+        """Freeze most encoder weights unless the caller explicitly asks otherwise."""
         if self.unfreeze_encoder:
             for param in self.encoder.parameters():
                 param.requires_grad = True
@@ -141,6 +172,7 @@ class BertMultiLabelAttentionClassifier(nn.Module):
         labels: torch.Tensor | None = None,
         return_attention: bool = False,
     ) -> ModelOutput:
+        """Run the encoder, classify the CLS representation, and optionally score tokens."""
         encoder_kwargs: dict[str, Any] = {
             "input_ids": input_ids,
             "attention_mask": attention_mask,
@@ -151,11 +183,14 @@ class BertMultiLabelAttentionClassifier(nn.Module):
             encoder_kwargs["token_type_ids"] = token_type_ids
 
         if not any(param.requires_grad for param in self.encoder.parameters()):
+            # When the encoder is frozen, disabling gradients saves memory and
+            # compute while still allowing the classifier head to train.
             with torch.no_grad():
                 enc = self.encoder(**encoder_kwargs)
         else:
             enc = self.encoder(**encoder_kwargs)
 
+        # MiniLM/BERT-style encoders place the aggregate CLS embedding at index 0.
         pooled = enc.last_hidden_state[:, 0, :]
         logits = self.classifier(self.dropout(pooled))
         loss = self.loss_fn(logits, labels.float()) if labels is not None else None
@@ -165,6 +200,8 @@ class BertMultiLabelAttentionClassifier(nn.Module):
             if not enc.attentions:
                 raise RuntimeError("Encoder did not return attentions.")
             last_layer_att = enc.attentions[-1]  # [batch, heads, seq, seq]
+            # Average CLS attention across heads, mask padding, then renormalize
+            # so token scores sum to roughly one per example.
             cls_attention = last_layer_att[:, :, 0, :].mean(dim=1)
             cls_attention = cls_attention * attention_mask.float()
             cls_attention = cls_attention / (cls_attention.sum(dim=1, keepdim=True) + 1e-12)
@@ -174,19 +211,24 @@ class BertMultiLabelAttentionClassifier(nn.Module):
 
 
 def set_seed(seed: int) -> None:
+    """Seed the random generators used by sampling, NumPy, and torch."""
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
 
 
 def clean_text(text: Any) -> str:
+    """Normalize raw SDGi text just enough for tokenization and display."""
     text = "" if text is None else str(text)
+    # Some parquet rows can contain the Unicode non-character U+FFFE; replace it
+    # rather than letting it leak into tokenization or matplotlib figures.
     text = text.replace("\ufffe", " ")
     text = re.sub(r"\s+", " ", text)
     return text.strip()
 
 
 def has_sdgi_split(data_dir: Path) -> bool:
+    """Return whether a directory contains the expected local SDGi parquet split."""
     return (
         (data_dir / "train-00000-of-00001.parquet").exists()
         and (data_dir / "test-00000-of-00001.parquet").exists()
@@ -194,6 +236,7 @@ def has_sdgi_split(data_dir: Path) -> bool:
 
 
 def is_inside_project(path: Path) -> bool:
+    """Check whether a checkpoint path is inside this script directory tree."""
     try:
         path.resolve().relative_to(HERE)
     except ValueError:
@@ -202,6 +245,7 @@ def is_inside_project(path: Path) -> bool:
 
 
 def project_metadata_path(path: Path | str) -> str:
+    """Store paths relative to scripts/ when possible for older run metadata."""
     path = Path(path)
     try:
         return str(path.resolve().relative_to(HERE))
@@ -210,6 +254,7 @@ def project_metadata_path(path: Path | str) -> str:
 
 
 def project_io_path(path: Path | str) -> Path:
+    """Resolve a saved run path back into a writable local path."""
     path = Path(path)
     if path.is_absolute():
         return path
@@ -223,6 +268,8 @@ def checkpoint_data_dir(saved_data_dir: Any) -> Path:
 
     path = Path(saved_data_dir)
     if not path.is_absolute():
+        # Older checkpoints may store paths relative to scripts/. Prefer that
+        # interpretation when it points to a complete local dataset.
         project_relative = (HERE / path).resolve()
         if has_sdgi_split(project_relative):
             return project_relative
@@ -232,6 +279,8 @@ def checkpoint_data_dir(saved_data_dir: Any) -> Path:
         return path
 
     if has_sdgi_split(DEFAULT_DATA_DIR):
+        # A checkpoint copied from another checkout should use this repo's data
+        # instead of silently reading from the original absolute path.
         print(
             "Checkpoint data_dir points outside this standalone copy; "
             f"using local data at {DEFAULT_DATA_DIR}"
@@ -242,6 +291,7 @@ def checkpoint_data_dir(saved_data_dir: Any) -> Path:
 
 
 def compact_text(text: str, limit: int = 700) -> str:
+    """Keep saved explanation examples readable without storing full articles."""
     text = clean_text(text)
     if len(text) <= limit:
         return text
@@ -249,6 +299,7 @@ def compact_text(text: str, limit: int = 700) -> str:
 
 
 def labels_to_vector(labels: Any) -> np.ndarray:
+    """Convert 1-based SDG labels into a fixed 17-column multi-hot vector."""
     vector = np.zeros(len(SDG_IDS), dtype=np.float32)
     for raw_label in labels:
         label = int(raw_label)
@@ -259,11 +310,15 @@ def labels_to_vector(labels: Any) -> np.ndarray:
 
 
 def labels_to_list(row: np.ndarray) -> list[int]:
+    """Convert a binary prediction row back to 1-based SDG label IDs."""
     return [idx + 1 for idx, value in enumerate(row.tolist()) if int(value) == 1]
 
 
 def coverage_sample(frame: pd.DataFrame, n_rows: int, seed: int) -> pd.DataFrame:
+    """Sample rows while trying to include at least one example of each SDG."""
     if n_rows <= 0 or n_rows >= len(frame):
+        # A non-positive limit means "use the full split"; still shuffle so seed
+        # behavior matches smaller sampled runs.
         return frame.sample(frac=1.0, random_state=seed).reset_index(drop=True)
 
     rng = random.Random(seed)
@@ -275,6 +330,8 @@ def coverage_sample(frame: pd.DataFrame, n_rows: int, seed: int) -> pd.DataFrame
     seen: set[int] = set()
 
     for sdg_id in SDG_IDS:
+        # First reserve coverage for every label that exists in the filtered
+        # split. This avoids tiny samples accidentally losing rare SDGs.
         candidates = [idx for idx, labels in label_sets.items() if sdg_id in labels]
         if not candidates:
             continue
@@ -285,6 +342,8 @@ def coverage_sample(frame: pd.DataFrame, n_rows: int, seed: int) -> pd.DataFrame
 
     remaining = [idx for idx in frame.index.tolist() if idx not in seen]
     rng.shuffle(remaining)
+    # Fill the rest with a seeded random order so sample size, coverage, and
+    # reproducibility are all controlled by the same function.
     selected.extend(remaining[: max(0, n_rows - len(selected))])
     selected = selected[:n_rows]
     rng.shuffle(selected)
@@ -292,12 +351,15 @@ def coverage_sample(frame: pd.DataFrame, n_rows: int, seed: int) -> pd.DataFrame
 
 
 def load_sdgi_split(data_dir: Path, split: str, language: str, max_samples: int, seed: int) -> pd.DataFrame:
+    """Load one SDGi split, apply language filtering, and return a coverage sample."""
     path = data_dir / f"{split}-00000-of-00001.parquet"
     if not path.exists():
         raise FileNotFoundError(f"Missing SDGi parquet: {path}")
 
     frame = pd.read_parquet(path, columns=["text", "labels", "metadata"])
     if language != "all":
+        # Language is stored in metadata, so keep the filter explicit and local
+        # to data loading rather than relying on prefiltered parquet files.
         frame = frame[
             frame["metadata"].map(lambda meta: (meta or {}).get("language") == language)
         ].copy()
@@ -309,7 +371,10 @@ def load_sdgi_split(data_dir: Path, split: str, language: str, max_samples: int,
 
 
 def make_collate_fn(tokenizer: Any, max_length: int):
+    """Create a DataLoader collate function bound to tokenizer settings."""
     def collate_fn(batch: list[dict[str, Any]]) -> dict[str, Any]:
+        # Tokenize whole batches for speed and pad dynamically to the longest
+        # sequence in the current batch, capped by max_length.
         texts = [row["text"] for row in batch]
         encoded = tokenizer(
             texts,
@@ -326,11 +391,13 @@ def make_collate_fn(tokenizer: Any, max_length: int):
 
 
 def move_batch_to_device(batch: dict[str, Any], device: torch.device) -> dict[str, Any]:
+    """Move only tensor fields used by the model onto the selected device."""
     keys = ["input_ids", "attention_mask", "token_type_ids", "labels"]
     return {key: batch[key].to(device) for key in keys if key in batch}
 
 
 def pick_device(requested: str) -> torch.device:
+    """Resolve auto/cpu/cuda requests and fail clearly when CUDA is unavailable."""
     if requested == "auto":
         return torch.device("cuda" if torch.cuda.is_available() else "cpu")
     device = torch.device(requested)
@@ -346,9 +413,12 @@ def train_model(
     epochs: int,
     learning_rate: float,
 ) -> list[dict[str, float]]:
+    """Fine-tune the selected trainable parameters and record epoch losses."""
     params = [param for param in model.parameters() if param.requires_grad]
     if not params:
         raise RuntimeError("No trainable parameters found.")
+    # AdamW is the standard optimizer for transformer fine-tuning and works for
+    # both the classifier head and the optionally unfrozen final encoder layers.
     optimizer = torch.optim.AdamW(params, lr=learning_rate)
     history: list[dict[str, float]] = []
 
@@ -358,6 +428,8 @@ def train_model(
         total_rows = 0
         for step, batch in enumerate(loader, start=1):
             batch_on_device = move_batch_to_device(batch, device)
+            # set_to_none=True avoids unnecessary gradient tensor writes and is
+            # safe because every trainable parameter receives fresh gradients.
             optimizer.zero_grad(set_to_none=True)
             out = model(
                 input_ids=batch_on_device["input_ids"],
@@ -369,6 +441,8 @@ def train_model(
             if out.loss is None:
                 raise RuntimeError("Training loss was not computed.")
             out.loss.backward()
+            # Clipping keeps small-data fine-tuning stable when a batch produces
+            # unusually large gradients.
             torch.nn.utils.clip_grad_norm_(params, max_norm=1.0)
             optimizer.step()
 
@@ -387,6 +461,9 @@ def predictions_from_probs(probs: np.ndarray, threshold: float) -> np.ndarray:
     preds = (probs > threshold).astype(np.int64)
     empty_rows = np.where(preds.sum(axis=1) == 0)[0]
     if len(empty_rows):
+        # The SDGi task expects at least one SDG per document. When every label
+        # falls below threshold, choose the model's strongest label rather than
+        # reporting an empty prediction.
         top_labels = probs[empty_rows].argmax(axis=1)
         preds[empty_rows, top_labels] = 1
     return preds
@@ -398,12 +475,15 @@ def evaluate_model(
     device: torch.device,
     threshold: float,
 ) -> tuple[dict[str, float], np.ndarray, np.ndarray, np.ndarray]:
+    """Run deterministic evaluation and return metrics plus raw arrays."""
     model.eval()
     logits_all: list[np.ndarray] = []
     labels_all: list[np.ndarray] = []
 
     with torch.no_grad():
         for batch in loader:
+            # Evaluation does not need text strings, only tensors. The raw texts
+            # stay in the batch for explanation routines elsewhere.
             batch_on_device = move_batch_to_device(batch, device)
             out = model(
                 input_ids=batch_on_device["input_ids"],
@@ -416,6 +496,8 @@ def evaluate_model(
 
     logits = np.concatenate(logits_all, axis=0)
     y_true = np.concatenate(labels_all, axis=0).astype(np.int64)
+    # BCEWithLogitsLoss trains logits directly; sigmoid converts them to
+    # independent label probabilities for thresholding and sweeps.
     probs = 1.0 / (1.0 + np.exp(-logits))
     y_pred = predictions_from_probs(probs, threshold)
     per_label = f1_score(y_true, y_pred, average=None, zero_division=0)
@@ -444,11 +526,14 @@ def explain_examples(
     n_examples: int,
     top_k: int,
 ) -> list[dict[str, Any]]:
+    """Extract compact held-out examples with label scores and attention tokens."""
     examples: list[dict[str, Any]] = []
     model.eval()
 
     for _, row in frame.head(n_examples).iterrows():
         text = clean_text(row["text"])
+        # For single-example explanations, keep special token masks so attention
+        # output can hide CLS/SEP/padding tokens from the report.
         encoded = tokenizer(
             text,
             truncation=True,
@@ -483,6 +568,8 @@ def explain_examples(
                 continue
             scored_tokens.append({"token": token, "score": float(score)})
 
+        # Store only the strongest tokens and label probabilities so results.json
+        # remains small enough to inspect by hand.
         top_tokens = sorted(scored_tokens, key=lambda item: item["score"], reverse=True)[:top_k]
         top_tokens = [
             {"token": item["token"], "score": round(item["score"], 6)}
@@ -507,6 +594,7 @@ def explain_examples(
 
 
 def package_version(package_name: str) -> str | None:
+    """Return an installed package version for reproducibility metadata."""
     try:
         return version(package_name)
     except PackageNotFoundError:
@@ -514,15 +602,19 @@ def package_version(package_name: str) -> str | None:
 
 
 def write_json_local(payload: dict[str, Any] | list[Any], path: Path) -> None:
+    """Write a local JSON artifact with readable formatting."""
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
 def make_run_dir(output_dir: Path, timestamp: str) -> tuple[str, Path]:
+    """Create a unique timestamped run directory without overwriting old runs."""
     runs_root = output_dir / "runs"
     run_id = timestamp
     run_dir = runs_root / run_id
     suffix = 1
     while run_dir.exists():
+        # Multiple runs can start within the same second during automated sweeps.
+        # Numeric suffixes keep every run addressable.
         run_id = f"{timestamp}_{suffix:02d}"
         run_dir = runs_root / run_id
         suffix += 1
@@ -544,10 +636,12 @@ def build_run_config(
     trainable_params: int,
     checkpoint_loaded_from: str | None = None,
 ) -> dict[str, Any]:
+    """Collect the configuration needed to reproduce or audit a run later."""
     return {
         "run_id": run_id,
         "timestamp": timestamp,
         "mode": mode,
+        # shlex.join preserves the command as a copy-pastable shell string.
         "command": shlex.join([Path(sys.executable).name, *sys.argv]),
         "model_name": args.model_name,
         "num_labels": len(SDG_IDS),
@@ -578,6 +672,7 @@ def build_run_config(
         "torch_version": torch.__version__,
         "transformers_version": package_version("transformers"),
         "sklearn_version": package_version("scikit-learn"),
+        # Keep the caveat next to the data that downstream charts will display.
         "attention_note": "Last-layer CLS attention averaged over heads; proxy explanation only.",
     }
 
@@ -588,6 +683,7 @@ def checkpoint_payload(
     run_config: dict[str, Any],
     metrics: dict[str, Any],
 ) -> dict[str, Any]:
+    """Build the torch checkpoint payload used by evaluation and reload paths."""
     return {
         "model_state_dict": model.state_dict(),
         "model_name": args.model_name,
@@ -619,6 +715,7 @@ def write_run_readme(
     metrics: dict[str, Any],
     checkpoint_name: str = "model.pt",
 ) -> None:
+    """Write a short per-run README so artifacts are understandable in isolation."""
     checkpoint_path = project_metadata_path(run_dir / checkpoint_name)
     text = f"""# SDGi Lens Run {run_config['run_id']}
 
@@ -658,6 +755,7 @@ SDGi token-level rationale labels for explanation validation.
 
 
 def append_runs_index(output_dir: Path, run_config: dict[str, Any], metrics: dict[str, Any]) -> None:
+    """Append one row to the lightweight run index for quick comparison."""
     index_path = output_dir / "runs_index.csv"
     columns = [
         "run_id",
@@ -693,6 +791,7 @@ def append_runs_index(output_dir: Path, run_config: dict[str, Any], metrics: dic
     with index_path.open("a", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=columns)
         if write_header:
+            # The index is append-only, so write the header only when creating it.
             writer.writeheader()
         writer.writerow(row)
 
@@ -705,6 +804,7 @@ def save_experiment(
     metrics: dict[str, Any],
     examples: list[dict[str, Any]],
 ) -> Path:
+    """Persist checkpoint, metrics, examples, and summary files for one run."""
     run_dir = project_io_path(run_config["run_dir"])
     combined = {
         "run_config": run_config,
@@ -714,6 +814,9 @@ def save_experiment(
         "metadata": run_config,
     }
 
+    # Save both granular files and a combined results.json. The granular files
+    # are convenient for targeted inspection; the combined file is what later
+    # pipeline stages read by default.
     torch.save(checkpoint_payload(model, args, run_config, metrics), run_dir / "model.pt")
     write_json_local(run_config, run_dir / "run_config.json")
     write_json_local(metrics, run_dir / "metrics.json")
@@ -726,6 +829,7 @@ def save_experiment(
 
 
 def load_checkpoint(path: Path, device: torch.device) -> dict[str, Any]:
+    """Load a local checkpoint and validate that model weights are present."""
     if not path.exists():
         raise FileNotFoundError(f"Missing checkpoint: {path}")
     # This loader is for checkpoints produced by this local script. PyTorch
@@ -737,6 +841,7 @@ def load_checkpoint(path: Path, device: torch.device) -> dict[str, Any]:
 
 
 def build_model_parser() -> argparse.ArgumentParser:
+    """Build the lower-level model CLI used by train_one and direct experiments."""
     parser = argparse.ArgumentParser(description="Minimal SDGi BERT attention prototype.")
     parser.add_argument("--data_dir", type=Path, default=DEFAULT_DATA_DIR)
     parser.add_argument("--output_dir", type=Path, default=HERE / "outputs")
@@ -763,8 +868,11 @@ def build_model_parser() -> argparse.ArgumentParser:
 
 
 def run_from_args(args: argparse.Namespace) -> int:
+    """Execute either a train/evaluate run or an eval-only checkpoint reload."""
     set_seed(args.seed)
     if args.test_seed is None:
+        # Default away from the train seed so sampled train/test ordering is not
+        # accidentally coupled when both splits are truncated.
         args.test_seed = args.seed + 1
     device = pick_device(args.device)
     local_files_only = not args.allow_download
@@ -778,6 +886,9 @@ def run_from_args(args: argparse.Namespace) -> int:
         checkpoint = load_checkpoint(args.load, device)
         saved_config = checkpoint.get("run_config", {})
 
+        # Replay checkpoint settings so eval-only runs measure the same model
+        # shape, preprocessing choices, and threshold used when the file was
+        # saved. Fallbacks keep older checkpoints loadable.
         args.model_name = str(checkpoint.get("model_name", saved_config.get("model_name", args.model_name)))
         args.threshold = float(checkpoint.get("threshold", saved_config.get("threshold", args.threshold)))
         args.train_samples = int(checkpoint.get("train_limit", saved_config.get("train_limit", args.train_samples)))
@@ -820,6 +931,8 @@ def run_from_args(args: argparse.Namespace) -> int:
                 unfreeze_encoder=args.unfreeze_encoder,
             ).to(device)
         except OSError as exc:
+            # The default path assumes model weights are already cached locally.
+            # This error tells the caller how to opt into a network-backed load.
             raise RuntimeError(
                 "Could not rebuild the model/tokenizer from the local HuggingFace cache. "
                 "Use --allow_download if network access is available."
@@ -852,6 +965,8 @@ def run_from_args(args: argparse.Namespace) -> int:
         print(f"Final micro-F1={metrics['micro_f1']:.4f} macro-F1={metrics['macro_f1']:.4f}")
 
         print("Extracting attention explanations...")
+        # Explanation extraction happens after metric computation so a display
+        # issue cannot obscure whether the checkpoint itself evaluates correctly.
         examples = explain_examples(
             model=model,
             tokenizer=tokenizer,
@@ -892,6 +1007,8 @@ def run_from_args(args: argparse.Namespace) -> int:
 
     print(f"Loading tokenizer/model: {args.model_name}")
     try:
+        # By default this uses only local HuggingFace cache files, which keeps
+        # the submitted pipeline reproducible without network access.
         tokenizer = AutoTokenizer.from_pretrained(
             args.model_name,
             use_fast=True,
@@ -916,6 +1033,8 @@ def run_from_args(args: argparse.Namespace) -> int:
         f"trainable_params={trainable_params:,} max_length={args.max_length}"
     )
     collate_fn = make_collate_fn(tokenizer, args.max_length)
+    # Shuffle only the training loader. Test order should remain deterministic
+    # because saved examples are taken from the start of the sampled test frame.
     train_loader = DataLoader(
         SDGiDataset(train_frame),
         batch_size=args.batch_size,
@@ -937,6 +1056,7 @@ def run_from_args(args: argparse.Namespace) -> int:
     timing = {"training_time_seconds": training_time_seconds, "training_time_minutes": training_time_minutes}
 
     print("Evaluating...")
+    # Evaluate the same in-memory weights that are about to be checkpointed.
     metrics, _, _, _ = evaluate_model(model, test_loader, device, args.threshold)
     metrics.update(
         {
@@ -990,10 +1110,12 @@ def run_from_args(args: argparse.Namespace) -> int:
 
 
 def model_cli_main() -> int:
+    """Entry point for the lower-level prototype CLI."""
     return run_from_args(build_model_parser().parse_args())
 
 
-# Marker-facing training stage orchestration.
+# Marker-facing training stage orchestration. The model code above can run one
+# experiment; the functions below build the full artifact grid used by main.py.
 from pipeline_utils import (
     ARTIFACTS_DIR,
     DATA_DIR,
@@ -1014,6 +1136,7 @@ from pipeline_utils import (
 )
 
 def artifact_complete(train_size: int, seed: int) -> bool:
+    """Return True only when metadata and referenced BERT files are present."""
     meta_path = artifact_metadata_path("bert", train_size, seed)
     if not meta_path.exists():
         return False
@@ -1024,9 +1147,12 @@ def artifact_complete(train_size: int, seed: int) -> bool:
 
 
 def train_one(args: argparse.Namespace, train_size: int, seed: int) -> dict[str, Any]:
+    """Train or reuse one BERT artifact for a size/seed condition."""
     out_dir = artifact_dir("bert", train_size, seed)
     meta_path = artifact_metadata_path("bert", train_size, seed)
     if artifact_complete(train_size, seed) and not args.force:
+        # Reuse keeps default sweeps quick because committed artifacts already
+        # satisfy the expected metadata contract.
         print(f"[train] skip existing bert train={train_size} seed={seed}")
         return read_json(meta_path)
 
@@ -1036,6 +1162,8 @@ def train_one(args: argparse.Namespace, train_size: int, seed: int) -> dict[str,
 
     out_dir.mkdir(parents=True, exist_ok=True)
     print(f"[train] training bert train={train_size} seed={seed}")
+    # Build arguments for the lower-level parser instead of duplicating the
+    # prototype's defaults and validation in this wrapper.
     bert_args_list = [
         "--data_dir", str(DATA_DIR),
         "--output_dir", str(out_dir),
@@ -1062,6 +1190,8 @@ def train_one(args: argparse.Namespace, train_size: int, seed: int) -> dict[str,
         bert_args_list.append("--unfreeze_encoder")
     bert_args = build_model_parser().parse_args(bert_args_list)
 
+    # run_from_args writes the detailed run directory and latest results.json;
+    # train_one wraps those outputs in artifact metadata for evaluate.py.
     run_from_args(bert_args)
     results_path = out_dir / "results.json"
     results = read_json(results_path)
@@ -1079,6 +1209,8 @@ def train_one(args: argparse.Namespace, train_size: int, seed: int) -> dict[str,
     run_dir = project_path(run_config["run_dir"])
     checkpoint = run_dir / "model.pt"
 
+    # artifact.json is the stable handoff between training and evaluation. It is
+    # intentionally smaller than results.json and points to the heavy files.
     meta = {
         "schema_version": 1,
         "model_type": "bert",
@@ -1104,6 +1236,7 @@ def train_one(args: argparse.Namespace, train_size: int, seed: int) -> dict[str,
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build the marker-facing BERT stage CLI."""
     parser = argparse.ArgumentParser(description="Train BERT SDG Lens artifacts.")
     parser.add_argument("--seeds", nargs="+", type=int, default=SEEDS)
     parser.add_argument("--train-sizes", nargs="+", type=int, default=TRAIN_SIZES)
@@ -1128,8 +1261,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> int:
+    """Run the requested BERT artifact grid and publish progress status."""
     args = build_parser().parse_args()
     if args.dry_run:
+        # Dry runs still exercise skip/retrain decisions for every grid cell.
         for train_size in args.train_sizes:
             for seed in args.seeds:
                 train_one(args, train_size, seed)
@@ -1149,6 +1284,8 @@ def main() -> int:
         for seed in args.seeds:
             train_one(args, train_size, seed)
             completed += 1
+            # Heartbeat after every artifact gives a cheap recovery signal if a
+            # long GPU run is interrupted.
             write_status(
                 "train",
                 "running",
