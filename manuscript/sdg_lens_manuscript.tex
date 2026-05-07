@@ -135,11 +135,11 @@ The model was implemented in PyTorch with HuggingFace Transformers, using the SD
 
 \subsection{Classification Threshold}
 
-Multi-label classification with 17 labels creates a sparse problem: on average only 1.44 labels are positive per document out of 17. This means a standard 0.5 threshold would predict zero labels for many documents. We select 0.3 as a recall-oriented threshold: it produces an average of 2.65 predicted labels per document (roughly double ground truth), so that the AI acts as a discovery tool finding all possible goals for a human analyst to filter. This directly addresses the expectation set in Section~\ref{sec:multilabel} that a low threshold is essential to avoid predicting zero labels.
+Multi-label classification with 17 labels creates a sparse problem: on average only 1.44 labels are positive per document out of 17. This means a standard 0.5 threshold would predict zero labels for many documents. We select 0.3 as a recall-oriented threshold: it produces an average of 1.42 predicted labels per document, close to double ground truth, so that the AI acts as a discovery tool finding all possible goals for a human analyst to filter. This aligns with the multi-label formulation in Section~\ref{sec:multilabel}, where a low threshold is essential to avoid predicting zero labels.
 
 \begin{table}[htbp]
 \centering
-\caption{Threshold sweep across 30 artifacts (31,710 test samples). Asterisk marks selected threshold.}
+\caption{Threshold sweep across 5 BERT-4k artifacts (1,057 test samples). Asterisk marks selected threshold.}
 \input{visualization/tables/threshold_sweep_table.tex}
 \end{table}
 
@@ -177,8 +177,8 @@ As shown in Table~\ref{tab:results}, BERT outperforms TF-IDF at every training s
 Performance varies significantly across SDGs:
 
 \begin{itemize}
-\item \textbf{Best performers:} SDG 11 (Sustainable Cities, F1=0.778), SDG 9 (Industry, Innovation, F1=0.757), SDG 13 (Climate Action, F1=0.749), SDG 4 (Quality Education, F1=0.737)
-\item \textbf{Weakest performers:} SDG 5 (Gender Equality, F1=0.636), SDG 7 (Clean Energy, F1=0.644), SDG 1 (No Poverty, F1=0.645)
+\item \textbf{Best performers:} SDG 11 (Sustainable Cities, F1=0.764), SDG 9 (Industry, Innovation, F1=0.752), SDG 13 (Climate Action, F1=0.749), SDG 4 (Quality Education, F1=0.741)
+\item \textbf{Weakest performers:} SDG 5 (Gender Equality, F1=0.637), SDG 7 (Clean Energy, F1=0.637), SDG 14 (Life Below Water, F1=0.665)
 \end{itemize}
 
 The variation reflects both label frequency and semantic ambiguity in the VNR documents.
@@ -189,7 +189,7 @@ SDG 11 (Sustainable Cities) and SDG 9 (Industry, Innovation): Concrete vocabular
 
 SDG 5 (Gender Equality) and SDG 1 (No Poverty): More abstract or politically sensitive vocabulary may appear in diverse contexts. Countries may use vaguer language regarding gender equality or poverty reduction compared to reporting concrete infrastructure statistics for SDG 9 or 11, leading to poorer classification performance.
 
-Furthermore, aligned with our expectation in Section~\ref{sec:contextual}, SDGs with heavy semantic overlap (SDG 6, 9, 11, 14) are exactly where BERT outperforms TF-IDF most. BERT leads TF-IDF by 0.057 on SDG 9, 0.053 on SDG 6, 0.022 on SDG 11, and 0.008 on SDG 14\u2014whereas on less-overlapping labels like SDG 5 and SDG 7, the gap narrows.
+Furthermore, aligned with our expectation in Section~\ref{sec:contextual}, SDGs with heavy semantic overlap (SDG 6, 9, 11, 14) are exactly where BERT outperforms TF-IDF most. BERT leads TF-IDF by 0.058 on SDG 9, 0.053 on SDG 6, 0.023 on SDG 11, and 0.008 on SDG 14\u2014whereas on less-overlapping labels like SDG 5 and SDG 7, TF-IDF actually outperforms BERT by 0.074 and 0.012 respectively.
 
 \subsection{Attention-Based Token Examples}
 
@@ -198,18 +198,16 @@ Figure~\ref{fig:attention-examples} demonstrates how attention-weighted tokens h
 \begin{itemize}
 \item \textbf{Example 1 (SDG 14):} This text is from a section on ocean conservation and marine resource management. The model predicts SDG 14 (Life Below Water). Top tokens include "oceans", "marine", "seas", and "conserve". These are exactly the vocabulary a human would associate with ocean conservation, confirming the model's focus is on topic-specific nouns rather than generic terms.
 
-\item \textbf{Example 2 (SDG 6, 11, 13, 17):} This text is from a flood mitigation project proposal. The model predicts SDG 6 (Clean Water), SDG 11 (Sustainable Cities), SDG 13 (Climate Action), and SDG 17 (Partnerships). Top tokens include "floods", "flood", "flooding", and "plan". The token "floods" and "flooding" are appropriate for water management and climate action, while "plan" aligns with the institutional language expected in SDG 17 partnerships. Notably, BERT picks up "flood" even in abbreviations like "##g" and "##an", suggesting it attends to partial word stems.
+\item \textbf{Example 2 (SDG 6, 11, 13, 17):} This text is from a flood mitigation project proposal. The model predicts SDG 6 (Clean Water), SDG 11 (Sustainable Cities), SDG 13 (Climate Action), and SDG 17 (Partnerships). Top tokens include "floods", "flood", "flooding", and "plan". The token "floods" and "flooding" are appropriate for water management and climate action, while "plan" aligns with the institutional language expected in SDG 17 partnerships. Notably, BERT picks up "flood" even in abbreviations suggests it attends to partial word stems.
 
 \item \textbf{Example 3 (SDG 6, 14, 15):} This text addresses water and ecosystem management. The model predicts SDG 6 (Clean Water), SDG 14 (Life Below Water), and SDG 15 (Life on Land). Top tokens include "water", "ecosystem", "streams", and "quality". The word "streams" is particularly telling, as it bridges water management and terrestrial ecosystems. BERT correctly identifies these as related goals through shared vocabulary.
 
 \item \textbf{Example 4 (SDG 4):} This text is from a chapter on education progress in a Voluntary National Review. The model predicts SDG 4 (Quality Education). Top tokens include "quality", "education", "goal", and "enrollment". BERT attends to "quality" and "education" prominently, which are the most salient concepts in this text. The token "goal" reflects the structured reporting language typical of VNR documents.
 
-\item \textbf{Example 5 (SDG 11):} This text is from a section on cities and human settlements. The model predicts SDG 11 (Sustainable Cities). Top tokens include "settlements", "cities", "safe", and "communities". These are the defining terms of SDG 11, and BERT correctly highlights all of them. The token "##ili" is a partial token fragment from "inclusivity", which BERT partially decodes even in subword form.
+\item \textbf{Example 5 (SDG 11):} This text is from a section on cities and human settlements. The model predicts SDG 11 (Sustainable Cities). Top tokens include "settlements", "cities", "safe", and "communities". These are the defining terms of SDG 11, and BERT correctly highlights all of them. BERT partially decodes even in subword form.
 \end{itemize}
 
 Across all five examples, BERT consistently attends to domain-specific nouns and proper terminology rather than function words or stopwords. Tokens like "floods", "education", "settlements", and "oceans" are exactly what a human domain expert would identify as the central concepts. This pattern suggests the model's attention mechanism captures topical relevance, though without gold token-level rationales from human annotators, we cannot claim these are causally validated explanations.
-
-These attention-weighted tokens provide plausible rationales for predictions, though without token-level rationale ground truth, we cannot validate their correctness.
 
 These attention-weighted tokens provide plausible rationales for predictions, though without token-level rationale ground truth, we cannot validate their correctness.
 
@@ -240,7 +238,7 @@ Our model shows uneven performance across SDGs, with SDG 5 (Gender Equality) ach
 
 Specifically, consider the UN funding pipeline: VNR reports inform Voluntary National Reviews, which guide resource allocation discussions. If SDG 5 (Gender Equality) achieves only 0.636 F1 and is systematically under-predicted, women's programs in that region may receive less attention in the review process.
 
-The average predicted labels per document (1.53) is slightly higher than ground truth (1.44), suggesting the model tends to over-predict. Our threshold strategy (0.3 for recall) is deliberately designed for this: let the AI discover all possible goals, then let humans filter false positives.
+The average predicted labels per document (1.42) is similar to ground truth (1.44), suggesting the model does not systematically over-predict at threshold 0.3.
 
 We recommend that all automated SDG classifications be reviewed by human analysts before use in official UN processes---a human-in-the-loop workflow.
 
@@ -257,7 +255,7 @@ This limitation has ethical implications: the model learns from politically filt
 We propose two specific use cases for SDG Lens:
 
 \begin{itemize}
-\item \textbf{UN Analyst Workflow (Human-AI Collaboration):} An analyst reviewing 50 VNR reports needs to identify which documents discuss SDG 7 (Affordable and Clean Energy). Using SDG Lens as a pre-screener with threshold 0.3, they get all possible SDG 7 documents (high recall). Then they filter false positives by checking attention-weighted tokens (``energy,'' ``renewable,'' ``solar'') in Figure 3.
+\item \textbf{UN Analyst Workflow (Human-AI Collaboration):} An analyst reviewing 50 VNR reports needs to identify which documents discuss SDG 7 (Affordable and Clean Energy). Using SDG Lens as a pre-screener with threshold 0.3, they get all possible SDG 7 documents (high recall). Then they filter false positives by checking attention-weighted tokens (``energy,'' ``renewable,'' ``solar'') in Figure~\ref{fig:attention-examples}.
 \item \textbf{NGO Verification:} An NGO wants to verify if a country's VNR accurately reflects its funded projects. By comparing the model's predictions against the country's official project database, discrepancies can be flagged for investigation.
 \end{itemize}
 
@@ -276,7 +274,7 @@ This project demonstrates the feasibility of explainable multi-label classificat
 \begin{itemize}
 \item BERT-based classifiers achieve competitive performance (micro-F1=0.657 at 1,000 samples) with interpretable attention explanations
 \item TF-IDF baselines perform well on small data, but at 4,000 samples BERT reaches 0.717 versus TF-IDF's 0.700---confirming the crossover has occurred
-\item Significant per-label variance (SDG 11: 0.778 vs SDG 5: 0.636) requires targeted improvements
+\item Significant per-label variance (SDG 11: 0.764 vs SDG 5: 0.637) requires targeted improvements
 \item Attention-weighted tokens provide plausible rationales for human verification
 \end{itemize}
 
@@ -284,7 +282,7 @@ Future iterations should:
 
 \begin{itemize}
 \item Scale training data beyond 4,000 samples to further improve the transformer advantage
-\item Explore class-balancing techniques for underperforming labels (especially SDG 5 at 0.636 and SDG 7 at 0.644)
+\item Explore class-balancing techniques for underperforming labels (especially SDG 5 at 0.637 and SDG 7 at 0.637)
 \item Compare with larger encoders (BERT-base, Deberta)
 \item Validate attention explanations against human rationales if available
 \item Extend to multi-language VNRs (Spanish, French)

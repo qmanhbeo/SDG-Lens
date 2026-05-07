@@ -263,6 +263,7 @@ def main() -> int:
 
     rows: list[dict[str, Any]] = []
     sweep_accumulator: list[tuple[np.ndarray, np.ndarray]] = []
+    sweep_bert4k_accumulator: list[tuple[np.ndarray, np.ndarray]] = []
     write_status("evaluate", "running", "evaluation", progress={"completed": 0, "total": len(metas)})
     for idx, meta in enumerate(sorted(metas, key=lambda item: (item["model_type"], item["train_size"], item["seed"])), start=1):
         print(f"[evaluate] {meta['artifact_id']}")
@@ -274,6 +275,8 @@ def main() -> int:
             raise ValueError(f"Unknown model_type in artifact metadata: {meta['model_type']}")
         rows.append(row_from_metrics(meta, metrics))
         sweep_accumulator.append((probs, y_true))
+        if meta["model_type"] == "bert" and int(meta["train_size"]) == 4000:
+            sweep_bert4k_accumulator.append((probs, y_true))
         write_status("evaluate", "running", "evaluation", progress={"completed": idx, "total": len(metas)})
 
     summary_rows = summarize(rows)
@@ -297,6 +300,13 @@ def main() -> int:
         RESULTS_DIR.mkdir(parents=True, exist_ok=True)
         (RESULTS_DIR / "threshold_sweep.json").write_text(json.dumps(sweep, indent=2), encoding="utf-8")
         print(f"[evaluate] saved threshold_sweep.json ({len(sweep)} thresholds x {len(y_true_combined)} samples)")
+
+    if sweep_bert4k_accumulator:
+        probs_b4k = np.concatenate([p for p, _ in sweep_bert4k_accumulator], axis=0)
+        y_true_b4k = np.concatenate([y for _, y in sweep_bert4k_accumulator], axis=0)
+        sweep_b4k = run_threshold_sweep(probs_b4k, y_true_b4k)
+        (RESULTS_DIR / "threshold_sweep_bert4k.json").write_text(json.dumps(sweep_b4k, indent=2), encoding="utf-8")
+        print(f"[evaluate] saved threshold_sweep_bert4k.json ({len(sweep_b4k)} thresholds x {len(y_true_b4k)} samples)")
 
     write_status("evaluate", "completed", "evaluation", progress={"completed": len(metas), "total": len(metas)})
     print("[evaluate] done")
