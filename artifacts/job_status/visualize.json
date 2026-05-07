@@ -2,7 +2,7 @@
   "job": "visualize",
   "status": "completed",
   "phase": "visualization",
-  "updated_at": "2026-05-07T15:48:15",
-  "last_heartbeat": "2026-05-07T15:48:15",
+  "updated_at": "2026-05-07T15:58:00",
+  "last_heartbeat": "2026-05-07T15:58:00",
   "outputs_root": "outputs"
 }

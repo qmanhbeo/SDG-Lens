@@ -415,7 +415,7 @@ def save_examples_figure(examples: list[dict[str, Any]], out_dir: Path, n_exampl
         pred = ", ".join(str(int(l)) for l in (example.get("predicted_labels", []) or [])) or "none"
         quality = example.get("example_quality")
         title = f"Example {row_idx}" + (f" ({quality})" if quality else "")
-        excerpt = wrap_text(shorten_text(example.get("text", ""), max_chars=180), width=36)
+        excerpt = wrap_text(shorten_text(example.get("text", ""), max_chars=540), width=36)
         # The left panel gives enough source text to interpret the labels, while
         # the two right panels expose model scores without claiming causality.
         text_ax.axis("off")
