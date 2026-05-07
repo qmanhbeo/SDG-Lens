@@ -24,6 +24,24 @@ Python 3.10–3.12. Tested on WSL2 (Ubuntu). Create a virtual environment and in
 pip install -r requirements.txt
 ```
 
+The final compile stage also expects these system commands on `PATH`:
+
+- `pdflatex` to compile `manuscript/sdg_lens_manuscript.tex`
+- `libreoffice` to convert `manuscript/coversheet.docx` to `coversheet.pdf`
+- `pdfunite` to merge `coversheet.pdf` and `sdg_lens_manuscript.pdf` into `sdg_lens_submission.pdf`
+
+On Ubuntu/WSL these are typically provided by TeX Live, LibreOffice, and Poppler
+utilities, for example:
+
+```bash
+# General LaTex tools
+sudo apt install texlive-latex-base texlive-latex-extra
+# For font/margin control
+sudo apt install texlive-xetex fonts-crosextra-carlito
+# To convert Coversheet + merge
+sudo apt install libreoffice poppler-utils
+```
+
 No additional data download is required. The SDGi parquet data, all trained model
 checkpoints (30 BERT + 30 TF-IDF), results, and manuscript assets are included in
 the repository under `data/`, `artifacts/`, `results/`, and `manuscript/` respectively.
@@ -46,7 +64,8 @@ python main.py sweep --force
 3. **evaluate.py** — Compute micro-F1, macro-F1, subset accuracy, and per-label F1
    from all artifacts.
 4. **visualize.py** — Generate manuscript-ready tables and charts.
-5. **compile_manuscript.py** — Compile `manuscript/sdg_lens_manuscript.tex` to PDF.
+5. **compile_manuscript.py** — Compile `manuscript/sdg_lens_manuscript.tex`,
+   convert the coversheet, and merge the final submission PDF.
 
 ## Defaults
 
@@ -93,6 +112,7 @@ results/
 manuscript/
   sdg_lens_manuscript.tex         (source)
   sdg_lens_manuscript.pdf         (compiled)
+  sdg_lens_submission.pdf         (coversheet + compiled manuscript)
   visualization/
     charts/fig_per_label_comparison.png
     tables/evaluation_summary_table.tex

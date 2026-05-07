@@ -1,19 +1,30 @@
 \documentclass[12pt,a4paper]{article}
-\usepackage[utf8]{inputenc}
-\usepackage[margin=2.5cm]{geometry}
+
+\usepackage[margin=2.54cm]{geometry}
+\usepackage{fontspec}
+\setmainfont{Carlito}
+
+\usepackage{setspace}
+\doublespacing
+
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{amsmath}
+\usepackage{xurl}
 \usepackage{hyperref}
 \usepackage{parskip}
 
-\title{SDG Lens: Explainable Multi-Label Classification of\\
-UN Sustainable Development Goals from Voluntary National Review Reports}
-\author{Aiden, Ting, Leo}
-\date{AI for Global Challenges, May 5, 2026}
+\pagenumbering{arabic}
+
 
 \begin{document}
-\maketitle
+
+\begin{center}
+{\LARGE SDG Lens: Attention-Enabled Explainable Multi-Label\\
+Classification of UN Sustainable Development Goals \par}
+
+\vspace{1cm}
+\end{center}
 
 \begin{abstract}
 We present SDG Lens, an attention-based multi-label classifier for identifying United Nations Sustainable Development Goals (SDGs) in UNDP's SDG Integration Corpus (SDGi) text. The system uses a partially fine-tuned BERT-family encoder (MiniLM) to predict one or more of the 17 SDG labels. To make the output easier to inspect, it also shows high-attention tokens for each prediction. We treat these tokens as proxy evidence, not as fully validated causal explanations.
@@ -143,7 +154,7 @@ Multi-label classification with 17 labels creates a sparse problem: on average o
 
 After prediction, we extract high-attention tokens and display them next to the predicted labels. These tokens are not treated as final explanations. They are shown as evidence that a human can inspect.
 
-Concretely, we take the final transformer layer's attention from the \texttt{[CLS]} token to each input token, average it across attention heads, mask padding and special tokens, and sort the remaining tokens by score. Therefore, ``top attended'' means highest average \texttt{[CLS]}-attention tokens, not words proven to cause the prediction.
+Concretely, we take the final transformer layer's attention from the \path{[CLS]} token to each input token, average it across attention heads, mask padding and special tokens, and sort the remaining tokens by score. Therefore, ``top attended'' means highest average \path{[CLS]}-attention tokens, not words proven to cause the prediction.
 
 To connect this more clearly to HateXplain, we add a small manual rationale check. For five held-out examples, we manually inspect whether the top attention tokens match the words that a human would expect for the SDG label. This is qualitative and small, but it makes the explainability claim more careful and transparent.
 
@@ -223,39 +234,6 @@ This project demonstrates the feasibility of explainable multi-label classificat
 
 The SDG Lens serves as a prototype for building trust with non-technical stakeholders (NGOs, UN researchers) by providing inspectable evidence for every prediction. This interpretability is not merely a technical requirement but an ethical mandate for high-stakes policy applications.
 
-\appendix
-\section{Reproducibility Note}
-
-This appendix describes the repository workflow exactly as implemented. The marker-facing command is \texttt{python main.py sweep}. It runs five stages in order: BERT training, TF-IDF baseline training, artifact evaluation, visualization generation, and LaTeX compilation. By default, the sweep uses training sizes \texttt{1000}, \texttt{2000}, and \texttt{4000}; seeds \texttt{42}, \texttt{43}, \texttt{44}, \texttt{45}, and \texttt{46}; language \texttt{en}; test seed \texttt{43}; threshold \texttt{0.3}; and device \texttt{cuda}. If all artifact metadata and referenced model files already exist, the training stages skip retraining unless \texttt{--force} is passed.
-
-\subsection{Data Source and Files}
-
-The local data files are copied SDGi Corpus parquet files stored as \texttt{data/train-00000-of-00001.parquet} and \texttt{data/test-00000-of-00001.parquet}. The dataset is the UNDP SDG Integration Corpus (SDGi Corpus), described in the repository \url{https://github.com/UNDP-Data/dsc-sdgi-corpus} and paper \url{https://ceur-ws.org/Vol-3764/paper3.pdf}. The source texts come from Voluntary National Reviews (\url{https://hlpf.un.org/vnrs}) and Voluntary Local Reviews (\url{https://sdgs.un.org/topics/voluntary-local-reviews}); the local dataset card lists license \texttt{CC BY-NC-SA 4.0}. The raw split contains \texttt{5880} train rows and \texttt{1470} test rows. After filtering to English, the current repository has \texttt{4225} train rows and \texttt{1057} test rows. Each row contains \texttt{text}, \texttt{embedding}, \texttt{labels}, and \texttt{metadata}; the model pipeline uses \texttt{text}, \texttt{labels}, and \texttt{metadata}. Labels are 1-based SDG identifiers from \texttt{1} to \texttt{17}.
-
-\subsection{Sampling and Preprocessing}
-
-Both model families filter by \texttt{metadata["language"] == "en"} and use the same coverage-aware sampling rule. If the requested sample size is less than the filtered split, the sampler first selects at least one available row for each SDG using \texttt{random.Random(seed)}, fills the remaining slots from a seeded shuffle of all other rows, truncates to the requested size, and shuffles the selected rows again. If the requested size is non-positive or at least the split size, it uses the full split after \texttt{pandas.sample(frac=1.0, random\_state=seed)}. For the test set, the sweep passes \texttt{test\_seed=43}; because \texttt{1470} exceeds the English test size, all \texttt{1057} English test rows are used in shuffled order.
-
-TF-IDF text preprocessing replaces standalone numbers with \texttt{NUM}, removes punctuation, collapses whitespace, lowercases, and strips leading/trailing whitespace. BERT text preprocessing only converts missing text to an empty string, replaces the Unicode non-character \texttt{U+FFFE} with a space, collapses whitespace, and strips.
-
-\subsection{BERT Training}
-
-The BERT-family model is \texttt{sentence-transformers/all-MiniLM-L6-v2}. The tokenizer is loaded with \texttt{use\_fast=True}; by default the code uses local HuggingFace files only unless \texttt{--allow-download} is passed. Tokenization uses truncation, dynamic padding, \texttt{return\_tensors="pt"}, and \texttt{max\_length=128}. The model loads \texttt{AutoConfig} with \texttt{output\_attentions=True} and eager attention where supported, then loads \texttt{AutoModel}. The encoder is frozen except for the final \texttt{2} transformer layers by default; passing \texttt{--unfreeze-encoder} trains all encoder layers. The classifier pools the final hidden state of the \texttt{[CLS]} token, applies dropout using the encoder hidden dropout probability or \texttt{0.1}, and maps the hidden size to \texttt{17} logits with one linear layer. The loss is \texttt{BCEWithLogitsLoss}.
-
-For each BERT run, the script seeds Python, NumPy, and PyTorch with the run seed. Training uses \texttt{AdamW}, learning rate \texttt{5e-5}, batch size \texttt{8}, \texttt{3} epochs, no scheduler, no class weighting, and gradient clipping at norm \texttt{1.0}. The training loader shuffles batches; the test loader does not. Probabilities are \texttt{sigmoid(logits)}. Predictions use \texttt{probability > 0.3}; if a row has no positive labels after thresholding, the highest-probability SDG is forced on as a top-1 fallback. Each run saves a checkpoint \texttt{model.pt}, \texttt{run\_config.json}, \texttt{metrics.json}, \texttt{examples.json}, \texttt{results.json}, and an \texttt{artifact.json} handoff file under \texttt{artifacts/bert\_train\{size\}\_seed\{seed\}/}.
-
-\subsection{TF-IDF Baseline}
-
-The baseline converts labels with \texttt{MultiLabelBinarizer(classes=range(1,18))}. It uses \texttt{TfidfVectorizer(strip\_accents="ascii", lowercase=False, ngram\_range=(1,1), min\_df=10, max\_df=0.9, max\_features=10000, binary=True)}. It trains one \texttt{SGDClassifier} per SDG label with \texttt{loss="hinge"}, \texttt{penalty="l2"}, \texttt{alpha=1e-4}, \texttt{shuffle=True}, \texttt{learning\_rate="optimal"}, \texttt{random\_state=seed}, \texttt{early\_stopping=True}, \texttt{validation\_fraction=0.2}, and \texttt{class\_weight="balanced"}. If a label column has only one class in a training slice, the saved model list stores \texttt{None} for that SDG. During baseline training metrics, such a column predicts the constant training value; during the separate evaluation stage, \texttt{None} columns predict \texttt{0}. Each baseline artifact saves \texttt{results.json}, \texttt{tfidf\_model.joblib}, and \texttt{artifact.json} under \texttt{artifacts/tfidf\_train\{size\}\_seed\{seed\}/}.
-
-\subsection{Evaluation, Sweeps, and Reporting}
-
-The evaluation stage discovers all \texttt{artifact.json} files under \texttt{artifacts/}. BERT artifacts are reloaded from \texttt{model.pt}, rebuilt with the checkpoint model name, threshold, batch size, max length, trainable-layer setting, and language, then evaluated on the same English test split. TF-IDF artifacts reload the saved vectorizer, per-label classifiers, and binarizer, then recompute predictions on the same English test split. Metrics are micro-F1, macro-F1, weighted-F1, subset accuracy, and per-label F1 with \texttt{zero\_division=0}. The summary groups rows by \texttt{model\_type} and \texttt{train\_size}, then reports means and sample standard deviations across available seeds.
-
-The evaluation stage writes \texttt{results/evaluation\_by\_seed.csv}, \texttt{results/evaluation\_summary.csv}, \texttt{results/evaluation\_summary.json}, and \texttt{results/evaluation\_summary.md}. It also writes two threshold sweeps at thresholds \texttt{0.20}, \texttt{0.25}, \texttt{0.30}, \texttt{0.35}, \texttt{0.40}, \texttt{0.45}, and \texttt{0.50}: \texttt{threshold\_sweep.json} pools all evaluated artifacts, while \texttt{threshold\_sweep\_bert4k.json} pools only BERT artifacts with \texttt{train\_size=4000}. These sweeps use \texttt{probability >= threshold} and do not apply the BERT top-1 empty-prediction fallback. TF-IDF sweep scores are produced by applying a sigmoid transform to each classifier's \texttt{decision\_function} margin; these are diagnostic scores, not calibrated probabilities.
-
-The visualization stage reads the evaluation CSV/JSON files. It writes summary tables to \texttt{outputs/tables/}, plots micro-F1 and macro-F1 bar charts, plots BERT-vs-TF-IDF per-label F1 at 4000 training samples, writes the manuscript threshold table from \texttt{threshold\_sweep\_bert4k.json}, and selects the largest seed-42 BERT result file for single-artifact metric, per-label, and explanation-example figures. Explanation figures show at most five examples. For each example, the report displays top label probabilities and the five highest-scoring non-special, non-padding attention tokens. Generated tables and charts are copied into \texttt{manuscript/visualization/}. The manuscript compiler checks that the required table and comparison charts exist, runs \texttt{pdflatex} twice with \texttt{-interaction=nonstopmode -halt-on-error}, writes the PDF, and removes temporary LaTeX files.
-
 \begin{thebibliography}{9}
 
 \item Kaplan, J., McCandlish, S., Henighan, T., Brown, T. B., Chess, B., Childs, R., ... \& Amodei, D. (2020). Scaling laws for neural language models. \textit{arXiv:2001.08361}. https://doi.org/10.48550/arXiv.2001.08361
@@ -270,8 +248,41 @@ The visualization stage reads the evaluation CSV/JSON files. It writes summary t
 
 \item Wiegreffe, S., \& Pinter, Y. (2020). Attention is not not Explanation. \textit{Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing (EMNLP-IJCNLP)}, 11--20. https://doi.org/10.18653/v1/D19-1002
 
-\item AI for Global Challenges. (2026). SDG Lens: Data and Code. https://github.com/qmanhbeo/AI4GC-group
+\item SDG Lens: Data and Code (2026) AI for Global Challenges. https://github.com/qmanhbeo/AI4GC-group
 
 \end{thebibliography}
+
+\appendix
+\section{Reproducibility Note}
+
+This appendix describes the repository workflow exactly as implemented. The marker-facing command is \path{python main.py sweep}. It runs five stages in order: BERT training, TF-IDF baseline training, artifact evaluation, visualization generation, and LaTeX compilation. By default, the sweep uses training sizes \path{1000}, \path{2000}, and \path{4000}; seeds \path{42}, \path{43}, \path{44}, \path{45}, and \path{46}; language \path{en}; test seed \path{43}; threshold \path{0.3}; and device \path{cuda}. If all artifact metadata and referenced model files already exist, the training stages skip retraining unless \path{--force} is passed.
+
+\subsection{Data Source and Files}
+
+The local data files are copied SDGi Corpus parquet files stored as \path{data/train-00000-of-00001.parquet} and \path{data/test-00000-of-00001.parquet}. The dataset is the UNDP SDG Integration Corpus (SDGi Corpus), described in the repository \url{https://github.com/UNDP-Data/dsc-sdgi-corpus} and paper \url{https://ceur-ws.org/Vol-3764/paper3.pdf}. The source texts come from Voluntary National Reviews (\url{https://hlpf.un.org/vnrs}) and Voluntary Local Reviews (\url{https://sdgs.un.org/topics/voluntary-local-reviews}); the local dataset card lists license \path{CC BY-NC-SA 4.0}. The raw split contains \path{5880} train rows and \path{1470} test rows. After filtering to English, the current repository has \path{4225} train rows and \path{1057} test rows. Each row contains \path{text}, \path{embedding}, \path{labels}, and \path{metadata}; the model pipeline uses \path{text}, \path{labels}, and \path{metadata}. Labels are 1-based SDG identifiers from \path{1} to \path{17}.
+
+\subsection{Sampling and Preprocessing}
+
+Both model families filter by \path{metadata["language"] == "en"} and use the same coverage-aware sampling rule. If the requested sample size is less than the filtered split, the sampler first selects at least one available row for each SDG using \path{random.Random(seed)}, fills the remaining slots from a seeded shuffle of all other rows, truncates to the requested size, and shuffles the selected rows again. If the requested size is non-positive or at least the split size, it uses the full split after \path{pandas.sample(frac=1.0, random\_state=seed)}. For the test set, the sweep passes \path{test\_seed=43}; because \path{1470} exceeds the English test size, all \path{1057} English test rows are used in shuffled order.
+
+TF-IDF text preprocessing replaces standalone numbers with \path{NUM}, removes punctuation, collapses whitespace, lowercases, and strips leading/trailing whitespace. BERT text preprocessing only converts missing text to an empty string, replaces the Unicode non-character \path{U+FFFE} with a space, collapses whitespace, and strips.
+
+\subsection{BERT Training}
+
+The BERT-family model is \path{sentence-transformers/all-MiniLM-L6-v2}. The tokenizer is loaded with \path{use\_fast=True}; by default the code uses local HuggingFace files only unless \path{--allow-download} is passed. Tokenization uses truncation, dynamic padding, \path{return\_tensors="pt"}, and \path{max\_length=128}. The model loads \path{AutoConfig} with \path{output\_attentions=True} and eager attention where supported, then loads \path{AutoModel}. The encoder is frozen except for the final \path{2} transformer layers by default; passing \path{--unfreeze-encoder} trains all encoder layers. The classifier pools the final hidden state of the \path{[CLS]} token, applies dropout using the encoder hidden dropout probability or \path{0.1}, and maps the hidden size to \path{17} logits with one linear layer. The loss is \path{BCEWithLogitsLoss}.
+
+For each BERT run, the script seeds Python, NumPy, and PyTorch with the run seed. Training uses \path{AdamW}, learning rate \path{5e-5}, batch size \path{8}, \path{3} epochs, no scheduler, no class weighting, and gradient clipping at norm \path{1.0}. The training loader shuffles batches; the test loader does not. Probabilities are \path{sigmoid(logits)}. Predictions use \path{probability > 0.3}; if a row has no positive labels after thresholding, the highest-probability SDG is forced on as a top-1 fallback. Each run saves a checkpoint \path{model.pt}, \path{run\_config.json}, \path{metrics.json}, \path{examples.json}, \path{results.json}, and an \path{artifact.json} handoff file under \path{artifacts/bert\_train\{size\}\_seed\{seed\}/}.
+
+\subsection{TF-IDF Baseline}
+
+The baseline converts labels with \path{MultiLabelBinarizer(classes=range(1,18))}. It uses \path{TfidfVectorizer(strip\_accents="ascii", lowercase=False, ngram\_range=(1,1), min\_df=10, max\_df=0.9, max\_features=10000, binary=True)}. It trains one \path{SGDClassifier} per SDG label with \path{loss="hinge"}, \path{penalty="l2"}, \path{alpha=1e-4}, \path{shuffle=True}, \path{learning\_rate="optimal"}, \path{random\_state=seed}, \path{early\_stopping=True}, \path{validation\_fraction=0.2}, and \path{class\_weight="balanced"}. If a label column has only one class in a training slice, the saved model list stores \path{None} for that SDG. During baseline training metrics, such a column predicts the constant training value; during the separate evaluation stage, \path{None} columns predict \path{0}. Each baseline artifact saves \path{results.json}, \path{tfidf\_model.joblib}, and \path{artifact.json} under \path{artifacts/tfidf\_train\{size\}\_seed\{seed\}/}.
+
+\subsection{Evaluation, Sweeps, and Reporting}
+
+The evaluation stage discovers all \path{artifact.json} files under \path{artifacts/}. BERT artifacts are reloaded from \path{model.pt}, rebuilt with the checkpoint model name, threshold, batch size, max length, trainable-layer setting, and language, then evaluated on the same English test split. TF-IDF artifacts reload the saved vectorizer, per-label classifiers, and binarizer, then recompute predictions on the same English test split. Metrics are micro-F1, macro-F1, weighted-F1, subset accuracy, and per-label F1 with \path{zero\_division=0}. The summary groups rows by \path{model\_type} and \path{train\_size}, then reports means and sample standard deviations across available seeds.
+
+The evaluation stage writes \path{results/evaluation\_by\_seed.csv}, \path{results/evaluation\_summary.csv}, \path{results/evaluation\_summary.json}, and \path{results/evaluation\_summary.md}. It also writes two threshold sweeps at thresholds \path{0.20}, \path{0.25}, \path{0.30}, \path{0.35}, \path{0.40}, \path{0.45}, and \path{0.50}: \path{threshold\_sweep.json} pools all evaluated artifacts, while \path{threshold\_sweep\_bert4k.json} pools only BERT artifacts with \path{train\_size=4000}. These sweeps use \path{probability >= threshold} and do not apply the BERT top-1 empty-prediction fallback. TF-IDF sweep scores are produced by applying a sigmoid transform to each classifier's \path{decision\_function} margin; these are diagnostic scores, not calibrated probabilities.
+
+The visualization stage reads the evaluation CSV/JSON files. It writes summary tables to \path{outputs/tables/}, plots micro-F1 and macro-F1 bar charts, plots BERT-vs-TF-IDF per-label F1 at 4000 training samples, writes the manuscript threshold table from \path{threshold\_sweep\_bert4k.json}, and selects the largest seed-42 BERT result file for single-artifact metric, per-label, and explanation-example figures. Explanation figures show at most five examples. For each example, the report displays top label probabilities and the five highest-scoring non-special, non-padding attention tokens. Generated tables and charts are copied into \path{manuscript/visualization/}. The manuscript compiler checks that the required table and comparison charts exist, runs \path{pdflatex} twice with \path{-interaction=nonstopmode -halt-on-error}, writes the PDF, and removes temporary LaTeX files.
 
 \end{document}
