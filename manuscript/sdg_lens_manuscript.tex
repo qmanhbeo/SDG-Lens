@@ -23,15 +23,11 @@ We also add a small manual inspection of top attention tokens on specific exampl
 
 \section{Introduction}
 
-The United Nations Sustainable Development Goals (SDGs) represent a universal call to action, with 193 member states committed to addressing 17 interconnected goals spanning poverty, inequality, climate change, and institutional governance. Tracking progress toward these goals requires analyzing vast quantities of national reporting documents, such as Voluntary National Reviews (VNRs) presented periodically and Voluntary Local Reviews (VLRs) shared at the UN High-level Political Forum.
+The United Nations Sustainable Development Goals (SDGs) represent a universal call to action, with 193 member states committed to addressing 17 interconnected goals spanning poverty, inequality, climate change, and institutional governance. Tracking progress toward these goals requires analyzing national reporting documents such as Voluntary National Reviews (VNRs) presented periodically at the UN High-level Political Forum. Manual SDG labelling can be slow and inconsistent. The same paragraph can relate to more than one SDG; for example, renewable energy text may belong to both SDG 7 and SDG 13. This makes the task multi-label classification.
 
-However, manual SDG labelling can be slow and inconsistent. The same paragraph can also relate to more than one SDG. For example, a paragraph about renewable energy and carbon emissions may belong to both SDG 7 and SDG 13. This makes the task a multi-label classification problem, not a normal single-label problem.
+Our research question is: can a compact BERT-family model classify VNR text into one or more SDG labels while also showing token-level evidence for human inspection?
 
-Our research question is: Can a compact BERT-family model classify VNR and VLR text into one or more SDG labels while also showing token-level evidence that helps humans inspect the prediction?
-
-We do not aim to build a fully automatic decision-maker. Instead, we build a prototype that supports human review. A useful SDG labelling tool should give both predicted labels and enough evidence for users to question or confirm those labels.
-
-In brief, we found:
+In brief:
 
 \begin{itemize}
 \item The final MiniLM model trained on 4,000 examples reaches micro-F1 = 0.717 and macro-F1 = 0.706 on the held-out test set.
@@ -48,22 +44,22 @@ Our approach builds on four theoretical foundations: transformer scaling laws, c
 
 \subsection{Transformer Scaling Laws and the Low-Data Challenge}\label{sec:scaling}
 
-TF-IDF models are strong baselines for text classification because they learn from word and phrase frequencies. In a small dataset, this can work very well. Transformer models such as BERT and MiniLM usually need more data and compute, but they can represent words in context. Also, research by Kaplan et al. (2020) demonstrates that large language models exhibit predictable scaling behaviors where performance improves with model size, data, and compute. Therefore, our expectation is not that MiniLM must always beat TF-IDF, but that it can get better as data grows.
+TF-IDF models are strong baselines for text classification because they learn from word and phrase frequencies. Transformer models such as BERT and MiniLM usually need more data, but they can represent words in context. Research by Kaplan et al. (2020) demonstrates that model performance improves predictably with data and compute. Our expectation was that MiniLM could get better as data grows.
 
 \subsection{Contextual Semantic Mapping}\label{sec:contextual}
 
 Traditional bag-of-words approaches like TF-IDF treat each word as an independent feature, losing syntactic structure and semantic context. BERT's contextual embeddings capture subtle distinctions: the word ``infrastructure'' carries different connotations when paired with ``rural'' versus ``digital.''
 
-This capability is particularly important for SDGs, which exhibit significant semantic overlap. For example, SDG 9 (Industry, Innovation and Infrastructure) shares vocabulary with SDG 11 (Sustainable Cities and Communities) (e.g. ``infrastructure,'' ``development,'' and ``sustainable''), and SDG 6 (Clean Water and Sanitation) shares vocabulary with SDG 14 (Life Below Water) (e.g. ``water,'' ``oceans,'' ``sanitation''). We would therefore expect BERT to outperform TF-IDF most clearly on SDGs with heavy semantic overlap, where word-level signals are ambiguous but contextual signals are strong.
+This capability is particularly important for SDGs, which exhibit significant semantic overlap. We would therefore expect BERT to outperform TF-IDF most clearly on SDGs with heavy semantic overlap, where word-level signals are ambiguous but contextual signals are strong.
 
 \subsection{Multi-Label Learning Theory}\label{sec:multilabel}
 
 The SDGs are explicitly interconnected. The 2030 Agenda (UN General Assembly, 2015) defines the 17 goals as ``integrated and indivisible,'' meaning that progress in one domain is structurally dependent on actions in others. This interlinkage has theoretical implications for multi-label classification:
 
 \begin{itemize}
-\item \textbf{Shared Vocabulary Effects:} Goals addressing similar themes (e.g., SDG 6 Clean Water and SDG 14 Life Below Water) share substantial vocabulary (``water,'' ``oceans,'' ``sanitation''). This can lead to both positive transfer (easier learning of related labels) and negative transfer (confusion between similar goals).
-\item \textbf{Label Co-occurrence Patterns:} In VNR reports, certain goals commonly appear together. For instance, SDG 5 (Gender Equality) frequently co-occurs with SDG 3 (Good Health) in sections addressing women's healthcare. Multi-label classifiers like ours implicitly learn these correlations through shared classifier weights, whereas independent binary classifiers would duplicate effort.
-\item \textbf{Classification Threshold Dynamics:} With 17 labels, the probability of any single label being positive is low (average 1.44 labels per document out of 17). This sparsity explains why we use a threshold of 0.3 rather than the standard 0.5. Without this adjustment, the model would predict zero labels for most documents.
+\item \textbf{Shared Vocabulary Effects:} Goals addressing similar themes share vocabulary. This can lead to both positive transfer (easier learning of related labels) and negative transfer (confusion between similar goals).
+\item \textbf{Label Co-occurrence Patterns:} In VNR reports, certain goals commonly appear together. Multi-label classifiers implicitly learn these correlations through shared classifier weights, whereas independent binary classifiers would duplicate effort.
+\item \textbf{Classification Threshold Dynamics:} With 17 labels, the probability of any single label being positive is low (average 1.44 labels per document). This sparsity explains why we use a threshold of 0.3 rather than 0.5.
 \end{itemize}
 
 Our multi-label architecture (sigmoid activation per label, independent thresholding) allows the model to learn both synergies and distinctions between goals, unlike hierarchical approaches that predict goals sequentially. In practice, Vanderfeesten et al. (2021) have utilized a similar multi-label transformer approach to navigate these semantic overlaps in this specific SDG classification task. We would therefore expect multi-label architecture to help BERT outperform independent binary classifiers, the low threshold to be essential to avoid predicting zero labels, and shared encoder weights to enable positive transfer between semantically related SDGs.
@@ -198,18 +194,6 @@ These tokens are proxy evidence only. Without gold token-level rationales, we ca
 
 \section{Discussion of Results}
 
-Our results have several implications for research, practice, and ethical considerations.
-
-\subsection{Interpretability as Ethical Mandate}
-
-Providing attention-weighted tokens is not merely a technical feature but an ethical choice. By enabling human-in-the-loop verification, we reduce the risk of blindly following ``Black Box'' predictions in high-stakes policy decisions. This aligns with emerging AI governance frameworks emphasizing explainability.
-
-As shown in Figure~\ref{fig:attention-examples}, the attention tokens specifically help the human analyst: instead of reading entire documents, they can glance at the top-attended tokens (e.g., ``housing,'' ``urban'' for SDG 11) to quickly verify the AI's reasoning. This transforms the AI from a ``Black Box'' to a ``Grey Box'' that supports informed human decision-making.
-
-However, we acknowledge the theoretical debate: attention may correlate with model behavior without providing causal explanations. This limitation should be clearly communicated to non-technical stakeholders.
-
-The UN's mission relies on accurate SDG tracking for resource allocation. If our model misses an SDG 5 (Gender Equality) label in a country's report, that country may receive less funding for women's programs. The stakes are not abstract, and they affect real funding decisions. We recommend that all automated SDG classifications be reviewed by human analysts.
-
 \subsection{Data Representation Limitations}
 
 Our prototype uses English-only documents, introducing potential linguistic and cultural bias. Non-Western contexts may interpret SDGs differently, and the model's vocabulary learned primarily from English-language VNRs may not transfer to other languages.
@@ -220,12 +204,7 @@ This limitation has ethical implications: the model learns from politically filt
 
 \subsection{Real-World Use Cases}
 
-We propose two specific use cases for SDG Lens:
-
-\begin{itemize}
-\item \textbf{UN Analyst Workflow (Human-AI Collaboration):} An analyst reviewing 50 VNR reports uses SDG Lens as a pre-screener with threshold 0.3 to get all possible SDG 7 documents (high recall), then filters false positives by checking attention tokens (``energy,'' ``renewable'') in the output.
-\item \textbf{NGO Verification:} An NGO compares the model's predictions against a country's official project database to flag discrepancies for investigation.
-\end{itemize}
+We propose two use cases for SDG Lens: an analyst reviewing VNR reports uses the model as a recall-oriented pre-screener (threshold 0.3) and filters false positives by checking attention tokens; an NGO compares predictions against a country's official project database to flag discrepancies.
 
 We recommend that all automated SDG classifications be reviewed by human analysts before official use.
 
@@ -234,9 +213,7 @@ We recommend that all automated SDG classifications be reviewed by human analyst
 This project demonstrates the feasibility of explainable multi-label classification for UN Sustainable Development Goals. Key findings:
 
 \begin{itemize}
-\item BERT-based classifiers achieve competitive performance (micro-F1=0.657 at 1,000 samples) with interpretable attention explanations
-\item TF-IDF baselines perform well on small data, but at 4,000 samples BERT reaches 0.717 versus TF-IDF's 0.700, confirming the crossover has occurred
-\item Significant per-label variance (SDG 11: 0.764 vs SDG 5: 0.637) requires targeted improvements; future work should explore class-balancing techniques, compare with larger encoders (BERT-base, Deberta), and extend to multi-language VNRs (Spanish, French)
+\item BERT-based classifiers achieve micro-F1=0.717 at 4,000 samples (vs TF-IDF's 0.700), with significant per-label variance (SDG 11: 0.764 vs SDG 5: 0.637); future work should explore class-balancing techniques, larger encoders, and multi-language VNRs
 \item Attention-weighted tokens provide plausible rationales for human verification; they should be treated as inspectable proxy evidence, not causal explanations
 \end{itemize}
 

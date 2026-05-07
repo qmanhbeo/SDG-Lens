@@ -1,3 +1,12 @@
+"""Public command-line entrypoint for the SDG Lens pipeline.
+
+The individual files under ``scripts/`` remain runnable on their own, but this
+module is the stable interface a marker or future maintainer is expected to use.
+It launches stages as subprocesses so heavy dependencies such as PyTorch,
+transformers, matplotlib, and LaTeX tooling are only imported by the stage that
+actually needs them.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -7,19 +16,32 @@ import sys
 from pathlib import Path
 
 
+# Resolve paths from this file rather than from the caller's current directory.
+# That keeps commands reproducible whether they are launched from the repo root,
+# an IDE, or another shell location.
 PROJECT_ROOT = Path(__file__).resolve().parent
 SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 
+# These defaults define the marker-facing sweep. Stage modules have their own
+# defaults too, but the orchestrator repeats them so ``python main.py sweep`` is
+# explicit about which experimental grid it will run.
 TRAIN_SIZES_DEFAULT = [1000, 2000, 4000]
 SEEDS_DEFAULT = [42, 43, 44, 45, 46]
 
 
 def stage_command(script_name: str, args: argparse.Namespace) -> list[str]:
+    """Translate top-level CLI options into the subprocess command for a stage."""
     command = [sys.executable, str(SCRIPTS_DIR / script_name)]
+
+    # Dry runs should traverse the same orchestration path as real runs, but
+    # stop inside each stage before filesystem-heavy or compute-heavy work.
     if getattr(args, "dry_run", False):
         command.append("--dry-run")
 
     if script_name == "train.py":
+        # Keep every forwarded option spelled out here. It is a little verbose,
+        # but it makes the public CLI contract obvious and avoids leaking
+        # unrelated options into a stage parser that does not understand them.
         seeds = getattr(args, "seeds", SEEDS_DEFAULT) or []
         if seeds:
             command.extend(["--seeds", *[str(v) for v in seeds]])
@@ -60,6 +82,8 @@ def stage_command(script_name: str, args: argparse.Namespace) -> list[str]:
             command.extend(["--model-name", v])
 
     elif script_name == "baseline.py":
+        # The baseline participates in the same seed/size grid as BERT so the
+        # evaluation stage can compare conditions one-for-one.
         seeds = getattr(args, "seeds", SEEDS_DEFAULT) or []
         if seeds:
             command.extend(["--seeds", *[str(v) for v in seeds]])
@@ -80,6 +104,8 @@ def stage_command(script_name: str, args: argparse.Namespace) -> list[str]:
             command.append("--force")
 
     elif script_name == "evaluate.py":
+        # Evaluation only needs model-loading controls; it discovers the trained
+        # artifacts from artifact metadata written by train.py and baseline.py.
         if (v := getattr(args, "device", None)) is not None:
             command.extend(["--device", v])
         if getattr(args, "allow_download", False):
@@ -88,6 +114,8 @@ def stage_command(script_name: str, args: argparse.Namespace) -> list[str]:
             command.append("--allow-missing")
 
     elif script_name == "compile_manuscript.py":
+        # The compile stage only needs to know which TeX source to compile; all
+        # visualization dependencies are checked by the stage itself.
         if (v := getattr(args, "tex", None)) is not None:
             command.extend(["--tex", v])
 
@@ -95,9 +123,13 @@ def stage_command(script_name: str, args: argparse.Namespace) -> list[str]:
 
 
 def run_stage(label: str, script_name: str, args: argparse.Namespace) -> None:
+    """Run one pipeline stage and fail fast with a readable stage label."""
     command = stage_command(script_name, args)
     print(f"[main] {label}: {' '.join(command)}", flush=True)
     env = os.environ.copy()
+
+    # Avoid littering the submitted repository with __pycache__ files when the
+    # marker-facing pipeline is run from a clean checkout.
     env.setdefault("PYTHONDONTWRITEBYTECODE", "1")
     result = subprocess.run(command, cwd=PROJECT_ROOT, env=env)
     if result.returncode != 0:
@@ -105,6 +137,10 @@ def run_stage(label: str, script_name: str, args: argparse.Namespace) -> None:
 
 
 def cmd_sweep(args: argparse.Namespace) -> int:
+    """Run the full reproducible pipeline in dependency order."""
+    # The ordering reflects the artifact contract: BERT and TF-IDF write
+    # metadata, evaluation aggregates metadata, visualization reads evaluation
+    # outputs, and the manuscript compile requires visualization assets.
     stages = [
         ("1/5 train neural model", "train.py"),
         ("2/5 train baseline", "baseline.py"),
@@ -119,6 +155,7 @@ def cmd_sweep(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build the public parser while keeping stage-specific options isolated."""
     parser = argparse.ArgumentParser(
         description="Marker-facing SDG Lens pipeline orchestrator.",
         epilog="Run `python main.py <command> --help` for command-specific help.",
@@ -186,7 +223,11 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+# The argument helpers below intentionally duplicate a few options across
+# subcommands. That makes ``python main.py <stage> --help`` useful without
+# requiring readers to inspect the underlying stage script.
 def _add_sweep_args(p: argparse.ArgumentParser) -> None:
+    """Arguments shared by the end-to-end sweep."""
     p.add_argument(
         "--train-sizes", nargs="+", type=int, default=TRAIN_SIZES_DEFAULT,
         help="Training set sizes (default: %(default)s).",
@@ -226,6 +267,7 @@ def _add_sweep_args(p: argparse.ArgumentParser) -> None:
 
 
 def _add_train_args(p: argparse.ArgumentParser) -> None:
+    """Arguments forwarded to the BERT training stage."""
     p.add_argument(
         "--seeds", nargs="+", type=int, default=SEEDS_DEFAULT,
         help="Random seeds (default: %(default)s).",
@@ -306,6 +348,7 @@ def _add_train_args(p: argparse.ArgumentParser) -> None:
 
 
 def _add_baseline_args(p: argparse.ArgumentParser) -> None:
+    """Arguments forwarded to the TF-IDF baseline stage."""
     p.add_argument(
         "--seeds", nargs="+", type=int, default=SEEDS_DEFAULT,
         help="Random seeds (default: %(default)s).",
@@ -345,6 +388,7 @@ def _add_baseline_args(p: argparse.ArgumentParser) -> None:
 
 
 def _add_evaluate_args(p: argparse.ArgumentParser) -> None:
+    """Arguments forwarded to artifact evaluation."""
     p.add_argument(
         "--device", default="cuda",
         help="Compute device (default: cuda).",
@@ -364,6 +408,7 @@ def _add_evaluate_args(p: argparse.ArgumentParser) -> None:
 
 
 def _add_visualize_args(p: argparse.ArgumentParser) -> None:
+    """Arguments forwarded to visualization generation."""
     p.add_argument(
         "--dry-run", action="store_true",
         help="Print stages without executing them.",
@@ -371,6 +416,7 @@ def _add_visualize_args(p: argparse.ArgumentParser) -> None:
 
 
 def _add_compile_args(p: argparse.ArgumentParser) -> None:
+    """Arguments forwarded to LaTeX compilation."""
     p.add_argument(
         "--tex",
         default="sdg_lens_manuscript.tex",
@@ -383,6 +429,7 @@ def _add_compile_args(p: argparse.ArgumentParser) -> None:
 
 
 def main() -> int:
+    """Parse the requested command and dispatch to its stage runner."""
     args = build_parser().parse_args()
     return args.func(args)
 
