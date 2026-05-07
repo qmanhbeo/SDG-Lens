@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import numpy as np
 import argparse
 import csv
 import json
@@ -62,6 +63,13 @@ def read_summary() -> list[dict[str, Any]]:
         raise FileNotFoundError(f"Missing evaluation summary: {path}")
     with path.open("r", newline="", encoding="utf-8") as f:
         return list(csv.DictReader(f))
+
+
+def read_summary_json() -> dict[str, Any]:
+    path = RESULTS_DIR / "evaluation_summary.json"
+    if not path.exists():
+        raise FileNotFoundError(f"Missing evaluation summary JSON: {path}")
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def read_by_seed() -> list[dict[str, Any]]:
@@ -201,6 +209,33 @@ def write_csv_table(rows: list[dict[str, Any]]) -> None:
     write_csv(TABLES_DIR / "evaluation_summary_table.csv", display_rows)
 
 
+def write_threshold_sweep_table(out_dir: Path) -> None:
+    path = RESULTS_DIR / "threshold_sweep.json"
+    if not path.exists():
+        return
+    sweep = json.loads(path.read_text(encoding="utf-8"))
+    lines = [
+        "\\begin{tabular}{rrrrr}",
+        "\\toprule",
+        "Threshold & Avg Predicted Labels & Avg True Labels & Micro-F1 & Zero Predictions \\% \\\\ ",
+        "\\midrule",
+    ]
+    for row in sweep:
+        thresh = row["threshold"]
+        avg_pred = row["avg_predicted_labels"]
+        avg_true = row["avg_true_labels"]
+        micro = row["micro_f1"]
+        zero_pct = row["fraction_zero_predictions"] * 100
+        marker = " *" if thresh == 0.3 else ""
+        zero_pct_latex = f"{zero_pct:.1f}"
+        lines.append(
+            f"${thresh:.2f}$ & ${avg_pred:.3f}$ & ${avg_true:.3f}$ & ${micro:.4f}$ & {zero_pct_latex}\\%{marker} \\\\ "
+        )
+    lines.extend(["\\bottomrule", "\\end{tabular}", ""])
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_dir.joinpath("threshold_sweep_table.tex").write_text("\n".join(lines), encoding="utf-8")
+
+
 def plot_metric(rows: list[dict[str, Any]], metric: str, title: str, path: Path) -> None:
     ordered = sorted(rows, key=lambda row: (int(row["train_size"]), row["model_type"]))
     labels = [f"{MODEL_DISPLAY_NAMES.get(row['model_type'], row['model_type'])[:18]} {int(row['train_size']) // 1000}k" for row in ordered]
@@ -260,6 +295,49 @@ def save_per_label_figure(metrics: dict[str, Any], out_dir: Path) -> Path:
         ax.text(idx, min(value + 0.025, 0.98), f"{value:.2f}", ha="center", va="bottom", fontsize=8)
     fig.tight_layout()
     path = out_dir / "fig_per_label_f1.png"
+    fig.savefig(path, dpi=200)
+    plt.close(fig)
+    return path
+
+
+def save_per_label_comparison_figure(evaluation_summary: dict[str, Any], out_dir: Path) -> Path | None:
+    summary = evaluation_summary.get("summary", [])
+    bert_4k = next((r for r in summary if r["model_type"] == "bert" and r["train_size"] == 4000), None)
+    tfidf_4k = next((r for r in summary if r["model_type"] == "tfidf" and r["train_size"] == 4000), None)
+    if not bert_4k or not tfidf_4k:
+        return None
+
+    bert_pl = bert_4k.get("per_label_f1", {})
+    tfidf_pl = tfidf_4k.get("per_label_f1", {})
+    if not bert_pl or not tfidf_pl:
+        return None
+
+    labels = list(range(1, 18))
+    bert_vals = [float(bert_pl.get(str(l), 0.0) or 0.0) for l in labels]
+    tfidf_vals = [float(tfidf_pl.get(str(l), 0.0) or 0.0) for l in labels]
+    x = np.arange(len(labels))
+    width = 0.4
+
+    fig, ax = plt.subplots(figsize=(13, 5.5))
+    b_bars = ax.bar(x - width / 2, bert_vals, width, label="BERT", color="#3a7bd5", edgecolor="white", linewidth=0.4)
+    t_bars = ax.bar(x + width / 2, tfidf_vals, width, label="TF-IDF", color="#f5a623", edgecolor="white", linewidth=0.4)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels([str(l) for l in labels])
+    ax.set_xlabel("SDG label")
+    ax.set_ylabel("F1 score")
+    ax.set_ylim(0, 1.0)
+    ax.set_title("Per-SDG F1 Scores: BERT vs TF-IDF (4,000 training samples)")
+    ax.legend(loc="upper right")
+    ax.grid(axis="y", alpha=0.25)
+
+    for bar in b_bars:
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01, f"{bar.get_height():.2f}", ha="center", va="bottom", fontsize=7)
+    for bar in t_bars:
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01, f"{bar.get_height():.2f}", ha="center", va="bottom", fontsize=7)
+
+    fig.tight_layout()
+    path = out_dir / "fig_per_label_comparison.png"
     fig.savefig(path, dpi=200)
     plt.close(fig)
     return path
@@ -347,7 +425,7 @@ def mirror_to_manuscript() -> None:
     MANUSCRIPT_TABLES_DIR.mkdir(parents=True, exist_ok=True)
     MANUSCRIPT_CHARTS_DIR.mkdir(parents=True, exist_ok=True)
 
-    for name in ["evaluation_summary_table.tex"]:
+    for name in ["evaluation_summary_table.tex", "threshold_sweep_table.tex"]:
         src = TABLES_DIR / name
         if src.exists():
             (MANUSCRIPT_TABLES_DIR / src.name).write_bytes(src.read_bytes())
@@ -356,7 +434,9 @@ def mirror_to_manuscript() -> None:
         "model_comparison_micro_f1.png",
         "model_comparison_macro_f1.png",
         "fig_metrics.png",
-        "fig_per_label_f1.png",
+            "fig_per_label_f1.png",
+            "fig_per_label_comparison.png",
+            "threshold_sweep_table.tex",
         "fig_explanation_examples.png",
     ]:
         src = CHARTS_DIR / name
@@ -390,6 +470,17 @@ def main() -> int:
 
     plot_metric(rows, "micro_f1", "SDG Lens Micro-F1 by Model and Train Size", CHARTS_DIR / "model_comparison_micro_f1.png")
     plot_metric(rows, "macro_f1", "SDG Lens Macro-F1 by Model and Train Size", CHARTS_DIR / "model_comparison_macro_f1.png")
+
+    try:
+        summary_json = read_summary_json()
+        comp_path = save_per_label_comparison_figure(summary_json, CHARTS_DIR)
+        if comp_path:
+            print(f"[visualize] saved fig_per_label_comparison.png")
+    except FileNotFoundError as exc:
+        print(f"[visualize] warning: {exc}")
+
+    write_threshold_sweep_table(TABLES_DIR)
+    print("[visualize] saved threshold_sweep_table.tex")
 
     bert_results_path = pick_best_bert_artifact()
     if bert_results_path is None:

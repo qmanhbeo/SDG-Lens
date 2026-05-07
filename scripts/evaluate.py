@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import math
 from collections import defaultdict
+from pathlib import Path
 from typing import Any
 
 import joblib
@@ -46,6 +48,28 @@ def std(values: list[float]) -> float:
         return 0.0
     avg = mean(values)
     return math.sqrt(sum((value - avg) ** 2 for value in values) / (len(values) - 1))
+
+
+def predictions_from_probs(probs: np.ndarray, threshold: float) -> np.ndarray:
+    return (probs >= threshold).astype(np.int64)
+
+
+def run_threshold_sweep(probs: np.ndarray, y_true: np.ndarray) -> list[dict[str, Any]]:
+    sweep_results = []
+    for thresh in [0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5]:
+        y_pred = predictions_from_probs(probs, thresh)
+        avg_pred = float(y_pred.sum(axis=1).mean())
+        avg_true = float(y_true.sum(axis=1).mean())
+        micro = float(f1_score(y_true, y_pred, average="micro", zero_division=0))
+        frac_zero = float(np.mean(y_pred.sum(axis=1) == 0))
+        sweep_results.append({
+            "threshold": thresh,
+            "avg_predicted_labels": round(avg_pred, 3),
+            "avg_true_labels": round(avg_true, 3),
+            "micro_f1": round(micro, 4),
+            "fraction_zero_predictions": round(frac_zero, 4),
+        })
+    return sweep_results
 
 
 def require_artifacts(metas: list[dict[str, Any]], allow_missing: bool) -> None:
@@ -93,8 +117,8 @@ def evaluate_bert(meta: dict[str, Any], device_name: str, allow_download: bool) 
         shuffle=False,
         collate_fn=bert_run.make_collate_fn(tokenizer, max_length),
     )
-    metrics, _, _, _ = bert_run.evaluate_model(model, loader, device, threshold)
-    return metrics
+    metrics, y_true, _, probs = bert_run.evaluate_model(model, loader, device, threshold)
+    return metrics, probs, y_true
 
 
 def evaluate_tfidf(meta: dict[str, Any]) -> dict[str, Any]:
@@ -121,7 +145,14 @@ def evaluate_tfidf(meta: dict[str, Any]) -> dict[str, Any]:
         str(label): float(score)
         for label, score in zip(baseline.SDG_IDS, f1_score(y_test, y_pred, average=None, zero_division=0).tolist())
     }
-    return metrics
+    probs = np.zeros_like(y_test, dtype=np.float64)
+    for idx, clf in enumerate(model_payload["models"]):
+        if clf is None:
+            probs[:, idx] = 0.0
+        else:
+            logits = clf.decision_function(x_test)
+            probs[:, idx] = 1.0 / (1.0 + np.exp(-logits))
+    return metrics, probs, y_test
 
 
 def row_from_metrics(meta: dict[str, Any], metrics: dict[str, Any]) -> dict[str, Any]:
@@ -133,6 +164,9 @@ def row_from_metrics(meta: dict[str, Any], metrics: dict[str, Any]) -> dict[str,
         "artifact_dir": meta["paths"]["artifact_dir"],
         **{name: metrics.get(name) for name in METRIC_NAMES},
     }
+    per_label = metrics.get("per_label_f1")
+    if per_label:
+        row["per_label_f1"] = per_label
     timing = meta.get("timing", {})
     if timing:
         row["training_time_seconds"] = timing.get("training_time_seconds")
@@ -172,6 +206,14 @@ def summarize(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             summary["training_time_seconds_mean"] = mean(timing_values)
             summary["training_time_seconds_std"] = std(timing_values)
             summary["training_time_seconds_mean_pm_std"] = f"{mean(timing_values):.1f} $\\pm$ {std(timing_values):.2f}"
+        per_label_groups = [row.get("per_label_f1") for row in group_rows if row.get("per_label_f1")]
+        if per_label_groups:
+            mean_per_label = {}
+            all_labels = list(per_label_groups[0].keys())
+            for label in all_labels:
+                vals = [float(p.get(label, 0.0) or 0.0) for p in per_label_groups]
+                mean_per_label[label] = mean(vals)
+            summary["per_label_f1"] = mean_per_label
         summary_rows.append(summary)
     return summary_rows
 
@@ -220,16 +262,18 @@ def main() -> int:
         return 0
 
     rows: list[dict[str, Any]] = []
+    sweep_accumulator: list[tuple[np.ndarray, np.ndarray]] = []
     write_status("evaluate", "running", "evaluation", progress={"completed": 0, "total": len(metas)})
     for idx, meta in enumerate(sorted(metas, key=lambda item: (item["model_type"], item["train_size"], item["seed"])), start=1):
         print(f"[evaluate] {meta['artifact_id']}")
         if meta["model_type"] == "bert":
-            metrics = evaluate_bert(meta, args.device, args.allow_download)
+            metrics, probs, y_true = evaluate_bert(meta, args.device, args.allow_download)
         elif meta["model_type"] == "tfidf":
-            metrics = evaluate_tfidf(meta)
+            metrics, probs, y_true = evaluate_tfidf(meta)
         else:
             raise ValueError(f"Unknown model_type in artifact metadata: {meta['model_type']}")
         rows.append(row_from_metrics(meta, metrics))
+        sweep_accumulator.append((probs, y_true))
         write_status("evaluate", "running", "evaluation", progress={"completed": idx, "total": len(metas)})
 
     summary_rows = summarize(rows)
@@ -245,6 +289,15 @@ def main() -> int:
     write_csv(RESULTS_DIR / "evaluation_summary.csv", summary_rows, summary_columns)
     write_json(RESULTS_DIR / "evaluation_summary.json", {"by_seed": rows, "summary": summary_rows})
     write_markdown(RESULTS_DIR / "evaluation_summary.md", summary_rows)
+
+    if sweep_accumulator:
+        probs_combined = np.concatenate([p for p, _ in sweep_accumulator], axis=0)
+        y_true_combined = np.concatenate([y for _, y in sweep_accumulator], axis=0)
+        sweep = run_threshold_sweep(probs_combined, y_true_combined)
+        RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+        (RESULTS_DIR / "threshold_sweep.json").write_text(json.dumps(sweep, indent=2), encoding="utf-8")
+        print(f"[evaluate] saved threshold_sweep.json ({len(sweep)} thresholds x {len(y_true_combined)} samples)")
+
     write_status("evaluate", "completed", "evaluation", progress={"completed": len(metas), "total": len(metas)})
     print("[evaluate] done")
     return 0
