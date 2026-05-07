@@ -2,8 +2,8 @@
   "job": "baseline",
   "status": "completed",
   "phase": "tfidf_training",
-  "updated_at": "2026-05-07T00:19:17",
-  "last_heartbeat": "2026-05-07T00:19:17",
+  "updated_at": "2026-05-07T03:06:11",
+  "last_heartbeat": "2026-05-07T03:06:11",
   "progress": {
     "completed": 15,
     "total": 15

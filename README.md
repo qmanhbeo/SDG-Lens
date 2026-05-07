@@ -9,6 +9,9 @@ Development Goals (SDGs), adapted from the HateXplain approach.
 # One-shot full pipeline (skips training if artifacts already exist)
 python main.py sweep
 
+# CPU-only machines should override the default CUDA device
+python main.py sweep --device cpu
+
 # Check what the pipeline would do without running anything
 python main.py sweep --dry-run
 ```
@@ -55,6 +58,9 @@ python main.py sweep --force
 | Test seed        | 43                     |
 | Device           | cuda                   |
 | Threshold        | 0.3                    |
+
+`main.py sweep` defaults to `--device cuda`. If CUDA is not available on the
+marker machine, run the same pipeline with `--device cpu`.
 
 To run a subset of seeds or sizes:
 

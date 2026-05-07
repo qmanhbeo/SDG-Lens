@@ -2,8 +2,8 @@
   "job": "train",
   "status": "completed",
   "phase": "bert_training",
-  "updated_at": "2026-05-07T00:19:16",
-  "last_heartbeat": "2026-05-07T00:19:16",
+  "updated_at": "2026-05-07T03:06:10",
+  "last_heartbeat": "2026-05-07T03:06:10",
   "progress": {
     "completed": 15,
     "total": 15
