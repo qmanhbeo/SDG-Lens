@@ -2,7 +2,7 @@
   "schema_version": 1,
   "model_type": "tfidf",
   "artifact_id": "tfidf_train2000_seed42",
-  "created_at": "2026-05-07T00:14:44",
+  "created_at": "2026-05-07T15:37:40",
   "seed": 42,
   "train_size": 2000,
   "test_seed": 43,
@@ -14,13 +14,13 @@
     "results": "artifacts/tfidf_train2000_seed42/results.json"
   },
   "metrics": {
-    "micro_f1": 0.6828282828282828,
-    "macro_f1": 0.6857029475300317,
-    "weighted_f1": 0.6819764120810307,
-    "subset_accuracy": 0.5648060548722801
+    "micro_f1": 0.6767574840228725,
+    "macro_f1": 0.6713519237691007,
+    "weighted_f1": 0.6777576782619574,
+    "subset_accuracy": 0.575212866603595
   },
   "run_config": {
-    "method": "TF-IDF + LinearSVC",
+    "method": "TF-IDF + linear SVM-style baseline",
     "language": "en",
     "data_dir": "/home/manh/study-BHam/AI4GC-2/data",
     "output_dir": "/home/manh/study-BHam/AI4GC-2/artifacts/tfidf_train2000_seed42",
@@ -30,13 +30,14 @@
     "test_rows": 1057,
     "train_limit": 2000,
     "test_limit": 1470,
+    "sampling": "coverage_aware_by_sdg",
     "max_features": 10000,
     "alpha": 0.0001,
     "random_state": 42,
     "test_random_state": 43
   },
   "timing": {
-    "training_time_seconds": 2.446161882000524,
-    "training_time_minutes": 0.040769364700008734
+    "training_time_seconds": 3.1218120880000697,
+    "training_time_minutes": 0.05203020146666783
   }
 }

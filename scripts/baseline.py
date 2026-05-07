@@ -61,6 +61,41 @@ def preprocess_text(text: str) -> str:
     return text.lower().strip()
 
 
+def coverage_sample(frame: pd.DataFrame, n_rows: int | None, seed: int) -> pd.DataFrame:
+    """Sample rows with the same SDG coverage rule used by the BERT pipeline."""
+    limit = 0 if n_rows is None else int(n_rows)
+    if limit <= 0 or limit >= len(frame):
+        # A non-positive or oversized limit means "use the full split"; still
+        # shuffle so saved examples and evaluation order remain seed-controlled.
+        return frame.sample(frac=1.0, random_state=seed).reset_index(drop=True)
+
+    rng = random.Random(seed)
+    label_sets = {
+        idx: {int(label) for label in labels}
+        for idx, labels in zip(frame.index.tolist(), frame["labels"].tolist())
+    }
+    selected: list[int] = []
+    seen: set[int] = set()
+
+    for sdg_id in SDG_IDS:
+        # Reserve at least one row for each SDG that exists in the filtered
+        # split, preventing small TF-IDF slices from silently losing rare goals.
+        candidates = [idx for idx, labels in label_sets.items() if sdg_id in labels]
+        if not candidates:
+            continue
+        choice = rng.choice(candidates)
+        if choice not in seen:
+            selected.append(choice)
+            seen.add(choice)
+
+    remaining = [idx for idx in frame.index.tolist() if idx not in seen]
+    rng.shuffle(remaining)
+    selected.extend(remaining[: max(0, limit - len(selected))])
+    selected = selected[:limit]
+    rng.shuffle(selected)
+    return frame.loc[selected].reset_index(drop=True)
+
+
 def load_sdgi_parquet(
     data_dir: Path,
     language: str = "en",
@@ -70,8 +105,8 @@ def load_sdgi_parquet(
     """Load SDGi train/test parquet files and apply the shared language split."""
     train_path = data_dir / "train-00000-of-00001.parquet"
     test_path = data_dir / "test-00000-of-00001.parquet"
-    train_df = pd.read_parquet(train_path)
-    test_df = pd.read_parquet(test_path)
+    train_df = pd.read_parquet(train_path, columns=["text", "labels", "metadata"])
+    test_df = pd.read_parquet(test_path, columns=["text", "labels", "metadata"])
 
     if language not in {"xx", "all"}:
         # The HuggingFace-style metadata column stores the language; filtering
@@ -82,14 +117,6 @@ def load_sdgi_parquet(
 
         train_df = train_df[train_df.apply(get_lang, axis=1) == language]
         test_df = test_df[test_df.apply(get_lang, axis=1) == language]
-
-    # Shuffle before taking head() limits later so each seed defines a stable
-    # but different experimental subset.
-    train_df = train_df.sample(frac=1, random_state=random_state).reset_index(drop=True)
-    test_df = test_df.sample(
-        frac=1,
-        random_state=random_state if test_random_state is None else test_random_state,
-    ).reset_index(drop=True)
 
     return train_df, test_df
 
@@ -123,10 +150,11 @@ def run_tfidf_baseline(
     train_n = len(train_df)
     test_n = len(test_df)
 
-    if train_limit:
-        train_df = train_df.head(train_limit)
-    if test_limit:
-        test_df = test_df.head(test_limit)
+    # Use the same coverage-aware sampling contract as BERT so baseline and
+    # neural artifacts compare models rather than different training subsets.
+    train_df = coverage_sample(train_df, train_limit, random_state)
+    test_seed = random_state if test_random_state is None else test_random_state
+    test_df = coverage_sample(test_df, test_limit, test_seed)
 
     # Preprocess before vectorization so saved vectorizer vocabulary matches the
     # exact normalization used at evaluation time.
@@ -203,7 +231,7 @@ def run_tfidf_baseline(
     # predictions from exactly the trained vectorizer and per-label models.
     output = {
         "run_config": {
-            "method": "TF-IDF + LinearSVC",
+            "method": "TF-IDF + linear SVM-style baseline",
             "language": language,
             "data_dir": str(data_dir),
             "output_dir": str(output_dir),
@@ -213,6 +241,7 @@ def run_tfidf_baseline(
             "test_rows": len(test_df),
             "train_limit": train_limit,
             "test_limit": test_limit,
+            "sampling": "coverage_aware_by_sdg",
             "max_features": max_features,
             "alpha": alpha,
             "random_state": random_state,

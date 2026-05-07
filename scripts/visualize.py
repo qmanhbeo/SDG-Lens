@@ -99,7 +99,7 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     columns = list(rows[0].keys()) if rows else []
     with path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=columns)
+        writer = csv.DictWriter(f, fieldnames=columns, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 
@@ -241,7 +241,7 @@ def write_csv_table(rows: list[dict[str, Any]]) -> None:
 
 def write_threshold_sweep_table(out_dir: Path) -> None:
     """Convert threshold-sweep JSON into the LaTeX table used by the report."""
-    path = RESULTS_DIR / "threshold_sweep.json"
+    path = RESULTS_DIR / "threshold_sweep_bert4k.json"
     if not path.exists():
         # Evaluation may be run in a partial mode. Missing sweep data should not
         # prevent other visualizations from being generated.
@@ -250,7 +250,7 @@ def write_threshold_sweep_table(out_dir: Path) -> None:
     lines = [
         "\\begin{tabular}{rrrrr}",
         "\\toprule",
-        "Threshold & Avg Predicted Labels & Avg True Labels & Micro-F1 & Zero Predictions \\% \\\\ ",
+        "Threshold & Avg Predicted Labels & Avg True Labels & Micro-F1 & Zero Predictions \\% \\\\",
         "\\midrule",
     ]
     for row in sweep:
@@ -260,11 +260,11 @@ def write_threshold_sweep_table(out_dir: Path) -> None:
         micro = row["micro_f1"]
         zero_pct = row["fraction_zero_predictions"] * 100
         # Mark the training/evaluation default so readers can connect the sweep
-        # table back to the reported headline metrics.
+        # table back to the reported BERT-4k operating point.
         marker = " *" if thresh == 0.3 else ""
         zero_pct_latex = f"{zero_pct:.1f}"
         lines.append(
-            f"${thresh:.2f}$ & ${avg_pred:.3f}$ & ${avg_true:.3f}$ & ${micro:.4f}$ & {zero_pct_latex}\\%{marker} \\\\ "
+            f"${thresh:.2f}$ & ${avg_pred:.3f}$ & ${avg_true:.3f}$ & ${micro:.4f}$ & {zero_pct_latex}\\%{marker} \\\\"
         )
     lines.extend(["\\bottomrule", "\\end{tabular}", ""])
     out_dir.mkdir(parents=True, exist_ok=True)

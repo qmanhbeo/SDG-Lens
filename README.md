@@ -41,7 +41,7 @@ python main.py sweep --force
 
 1. **train.py** — Fine-tune a MiniLM multi-label classifier per seed/size combination.
    All checkpoints are on GitHub; this stage is a no-op when artifacts already exist.
-2. **baseline.py** — Train TF-IDF + LinearSVC baseline per seed/size combination.
+2. **baseline.py** — Train TF-IDF + linear SVM-style baseline per seed/size combination.
    All checkpoints are on GitHub; this stage is a no-op when artifacts already exist.
 3. **evaluate.py** — Compute micro-F1, macro-F1, subset accuracy, and per-label F1
    from all artifacts.

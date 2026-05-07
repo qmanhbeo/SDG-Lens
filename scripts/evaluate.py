@@ -152,7 +152,7 @@ def evaluate_tfidf(meta: dict[str, Any]) -> dict[str, Any]:
     test_seed = int(meta.get("test_seed", TEST_SEED))
     test_samples = int(meta.get("test_samples", TEST_SAMPLES or 1470))
     _, test_df = baseline.load_sdgi_parquet(DATA_DIR, language, seed, test_seed)
-    test_df = test_df.head(test_samples)
+    test_df = baseline.coverage_sample(test_df, test_samples, test_seed)
     x_test_texts = np.asarray([baseline.preprocess_text(text) for text in test_df["text"]], dtype=object)
     y_test = model_payload["binarizer"].transform(test_df["labels"].tolist())
     x_test = model_payload["vectorizer"].transform(x_test_texts)
@@ -208,7 +208,7 @@ def write_csv(path, rows: list[dict[str, Any]], columns: list[str]) -> None:
     """Write rows with an explicit column order for stable downstream tables."""
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=columns)
+        writer = csv.DictWriter(f, fieldnames=columns, lineterminator="\n")
         writer.writeheader()
         for row in rows:
             writer.writerow({column: row.get(column) for column in columns})

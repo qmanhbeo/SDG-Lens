@@ -17,7 +17,7 @@ UN Sustainable Development Goals from Voluntary National Review Reports}
 
 \begin{abstract}
 We present SDG Lens, an attention-based multi-label classifier for identifying United Nations Sustainable Development Goals (SDGs) in UNDP's SDG Integration Corpus (SDGi) text. The system uses a partially fine-tuned BERT-family encoder (MiniLM) to predict one or more of the 17 SDG labels. To make the output easier to inspect, it also shows high-attention tokens for each prediction. We treat these tokens as proxy evidence, not as fully validated causal explanations.
-We compare the MiniLM model with a TF-IDF + LinearSVC baseline using 4,000 training examples. The TF-IDF baseline reaches micro-F1 = 0.700, macro-F1 = 0.696, and subset accuracy = 0.595. MiniLM reaches micro-F1 = 0.717, macro-F1 = 0.706, and subset accuracy = 0.670, outperforming the baseline across all metrics.
+We compare the MiniLM model with a TF-IDF + linear SVM-style baseline using 4,000 training examples. The TF-IDF baseline reaches micro-F1 = 0.700, macro-F1 = 0.697, and subset accuracy = 0.586. MiniLM reaches micro-F1 = 0.717, macro-F1 = 0.706, and subset accuracy = 0.670, outperforming the baseline across all metrics.
 We also add a small manual inspection of top attention tokens on specific examples to check whether the model's highlights align with human expectations. The results show that SDG Lens is useful as a human-in-the-loop support tool, but it should not replace human judgement in policy or funding decisions.
 \end{abstract}
 
@@ -31,7 +31,7 @@ In brief:
 
 \begin{itemize}
 \item The final MiniLM model trained on 4,000 examples reaches micro-F1 = 0.717 and macro-F1 = 0.706 on the held-out test set.
-\item The TF-IDF + LinearSVC baseline reaches micro-F1 = 0.700 and macro-F1 = 0.696, showing that simple models can be very competitive in a low-data setting.
+\item The TF-IDF + linear SVM-style baseline reaches micro-F1 = 0.700 and macro-F1 = 0.697, showing that simple models can be very competitive in a low-data setting.
 \item Attention tokens often match meaningful SDG concepts, such as ``infrastructure'', ``housing'', ``peace'', ``greenhouse'', and ``emissions''.
 \item Attention should be presented as inspectable proxy evidence, not as a fully validated explanation.
 \end{itemize}
@@ -74,7 +74,7 @@ Moreover, this attention-as-explanation approach is theoretically contested. Jai
 
 \subsection{Data Collection and Annotation Process}
 
-We used the SDGi Corpus, a dataset of SDG-related text from Voluntary National Reviews and Voluntary Local Reviews. We used the English subset for this prototype. Each text can have one or more of the 17 SDG labels.
+We used the SDGi Corpus, a dataset of SDG-related text from Voluntary National Reviews and Voluntary Local Reviews. We used the English subset for this prototype. The raw test split contains 1,470 rows; after filtering to English, 1,057 rows remain and are used for final evaluation. Each text can have one or more of the 17 SDG labels.
 
 It is important to describe our role clearly. We did not collect the original reports ourselves, and we did not create the official SDG labels from scratch. The SDG labels are provided by the SDGi Corpus. Our own contribution is the AI prototype, the baseline comparison, and a small manual rationale inspection of selected held-out examples.
 
@@ -103,7 +103,7 @@ Our model uses a BERT-family encoder (sentence-transformers/all-MiniLM-L6-v2) wi
 
 \begin{itemize}
 \item \textbf{Encoder:} MiniLM (6 layers, 384 hidden dimensions), frozen except last 2 transformer layers
-\item \textbf{Pooling:} CLS token from last hidden state
+\item \textbf{Pooling:} CLS token from last hidden state, where CLS is the transformer's special summary token
 \item \textbf{Dropout:} 10\% hidden dropout
 \item \textbf{Classifier:} Linear layer mapping 384 $\to$ 17 (SDG labels)
 \item \textbf{Loss:} Binary Cross-Entropy with Logits (BCEWithLogitsLoss)
@@ -112,6 +112,8 @@ Our model uses a BERT-family encoder (sentence-transformers/all-MiniLM-L6-v2) wi
 We use a low classification threshold (0.3) to prioritize recall. This ensures fewer relevant SDGs are missed, even at the cost of more false positives requiring human filtering. This represents a deliberate Human-AI Collaboration strategy: the AI acts as a discovery tool (finding all possible goals), and the human acts as the final filter (removing false positives).
 
 The choice of sigmoid activation (versus softmax) is fundamental to multi-label learning. In multi-class problems (exactly one correct label), softmax produces a probability distribution summing to 1. In multi-label problems (any subset of labels can be correct), each label is independent. Sigmoid applies independently to each logit, computing $\sigma(\text{logit})$, which allows any combination of labels to be predicted. This is essential for SDGs where a document legitimately addresses multiple goals.
+
+The baseline uses TF-IDF to convert each document into sparse word-importance features, then applies a linear SVM-style classifier to learn a separating boundary for each SDG label. In tables, we shorten this baseline name to ``TF-IDF'' for readability.
 
 \subsection{Implementation Details}
 
@@ -129,17 +131,19 @@ The model was implemented in PyTorch with HuggingFace Transformers, using the SD
 
 \subsection{Classification Threshold}
 
-Multi-label classification with 17 labels creates a sparse problem: on average only 1.44 labels are positive per document out of 17. This means a standard 0.5 threshold would predict zero labels for many documents. We select 0.3 as a recall-oriented threshold: it produces an average of 1.42 predicted labels per document, close to double ground truth, so that the AI acts as a discovery tool finding all possible goals for a human analyst to filter. This aligns with the multi-label formulation in Section~\ref{sec:multilabel}, where a low threshold is essential to avoid predicting zero labels.
+Multi-label classification with 17 labels creates a sparse problem: on average only 1.44 labels are positive per document out of 17. This means a standard 0.5 threshold would predict zero labels for many documents. We select 0.3 as a recall-oriented threshold: for the BERT-4k artifacts, it produces an average of 1.42 predicted labels per document, close to the 1.44 average true labels, so that the AI acts as a discovery tool without usually returning empty predictions. This aligns with the multi-label formulation in Section~\ref{sec:multilabel}, where a low threshold is essential to avoid predicting zero labels.
 
 \begin{table}[htbp]
 \centering
-\caption{Threshold sweep across 5 BERT-4k artifacts (1,057 test samples). Asterisk marks selected threshold.}
+\caption{Threshold sweep across 5 BERT-4k artifacts (1,057 test samples per seed). Asterisk marks selected threshold.}
 \input{visualization/tables/threshold_sweep_table.tex}
 \end{table}
 
 \subsection{Attention-Based Evidence and Manual Rationale Check}
 
 After prediction, we extract high-attention tokens and display them next to the predicted labels. These tokens are not treated as final explanations. They are shown as evidence that a human can inspect.
+
+Concretely, we take the final transformer layer's attention from the \texttt{[CLS]} token to each input token, average it across attention heads, mask padding and special tokens, and sort the remaining tokens by score. Therefore, ``top attended'' means highest average \texttt{[CLS]}-attention tokens, not words proven to cause the prediction.
 
 To connect this more clearly to HateXplain, we add a small manual rationale check. For five held-out examples, we manually inspect whether the top attention tokens match the words that a human would expect for the SDG label. This is qualitative and small, but it makes the explainability claim more careful and transparent.
 
@@ -158,7 +162,7 @@ We report micro-F1, macro-F1, weighted-F1, subset accuracy, and per-SDG F1. Micr
 \input{visualization/tables/evaluation_summary_table.tex}
 \end{table}
 
-As shown in Table~\ref{tab:results}, BERT outperforms TF-IDF at every training size we tested: 0.657 vs 0.611 at 1,000 samples, 0.687 vs 0.672 at 2,000 samples, and 0.717 vs 0.700 at 4,000 samples. This runs counter to the expectation in Section~\ref{sec:scaling} that compact transformer models underperform simple baselines in low-data regimes—BERT's contextual embeddings give it an advantage even at 1,000 examples. Both models improve with scale, but BERT's advantage is consistent throughout.
+As shown in Table~\ref{tab:results}, BERT outperforms TF-IDF at every training size we tested: 0.657 vs 0.607 at 1,000 samples, 0.687 vs 0.675 at 2,000 samples, and 0.717 vs 0.700 at 4,000 samples. This runs counter to the expectation in Section~\ref{sec:scaling} that compact transformer models underperform simple baselines in low-data regimes—BERT's contextual embeddings give it an advantage even at 1,000 examples. Both models improve with scale, but BERT's advantage is consistent throughout.
 
 \begin{figure}[htbp]
 \centering
@@ -177,7 +181,7 @@ Performance varies significantly across SDGs:
 
 The variation reflects both label frequency and semantic ambiguity in the VNR documents. SDG 11 (Sustainable Cities) and SDG 9 (Industry, Innovation) benefit from concrete vocabulary (``infrastructure,'' ``urban,'' ``industry'') that creates a consistent feature space. SDG 5 (Gender Equality) and SDG 1 (No Poverty) use more abstract or politically sensitive language that varies across countries, leading to poorer performance.
 
-As expected in Section~\ref{sec:contextual}, SDGs with heavy semantic overlap (SDG 6, 9, 11, 14) are where BERT outperforms TF-IDF most. BERT leads TF-IDF by 0.058 on SDG 9, 0.053 on SDG 6, 0.023 on SDG 11, and 0.008 on SDG 14, whereas on less-overlapping labels like SDG 5 and SDG 7, TF-IDF actually outperforms BERT by 0.074 and 0.012 respectively.
+The per-label pattern partly supports the contextual-overlap expectation in Section~\ref{sec:contextual}, but not uniformly. At 4,000 training samples, BERT's largest gains are on SDG 10 (+0.106), SDG 13 (+0.082), SDG 14 (+0.059), SDG 9 (+0.046), and SDG 11 (+0.030), while SDG 6 is almost tied (+0.001). TF-IDF still leads on SDG 5 (+0.111), SDG 16 (+0.063), SDG 3 (+0.031), SDG 7 (+0.028), and SDG 12 (+0.024), showing that sparse lexical features remain strong for several goals.
 
 \subsection{Attention-Based Token Examples}
 
@@ -218,6 +222,39 @@ This project demonstrates the feasibility of explainable multi-label classificat
 \end{itemize}
 
 The SDG Lens serves as a prototype for building trust with non-technical stakeholders (NGOs, UN researchers) by providing inspectable evidence for every prediction. This interpretability is not merely a technical requirement but an ethical mandate for high-stakes policy applications.
+
+\appendix
+\section{Reproducibility Note}
+
+This appendix describes the repository workflow exactly as implemented. The marker-facing command is \texttt{python main.py sweep}. It runs five stages in order: BERT training, TF-IDF baseline training, artifact evaluation, visualization generation, and LaTeX compilation. By default, the sweep uses training sizes \texttt{1000}, \texttt{2000}, and \texttt{4000}; seeds \texttt{42}, \texttt{43}, \texttt{44}, \texttt{45}, and \texttt{46}; language \texttt{en}; test seed \texttt{43}; threshold \texttt{0.3}; and device \texttt{cuda}. If all artifact metadata and referenced model files already exist, the training stages skip retraining unless \texttt{--force} is passed.
+
+\subsection{Data Source and Files}
+
+The local data files are copied SDGi Corpus parquet files stored as \texttt{data/train-00000-of-00001.parquet} and \texttt{data/test-00000-of-00001.parquet}. The dataset is the UNDP SDG Integration Corpus (SDGi Corpus), described in the repository \url{https://github.com/UNDP-Data/dsc-sdgi-corpus} and paper \url{https://ceur-ws.org/Vol-3764/paper3.pdf}. The source texts come from Voluntary National Reviews (\url{https://hlpf.un.org/vnrs}) and Voluntary Local Reviews (\url{https://sdgs.un.org/topics/voluntary-local-reviews}); the local dataset card lists license \texttt{CC BY-NC-SA 4.0}. The raw split contains \texttt{5880} train rows and \texttt{1470} test rows. After filtering to English, the current repository has \texttt{4225} train rows and \texttt{1057} test rows. Each row contains \texttt{text}, \texttt{embedding}, \texttt{labels}, and \texttt{metadata}; the model pipeline uses \texttt{text}, \texttt{labels}, and \texttt{metadata}. Labels are 1-based SDG identifiers from \texttt{1} to \texttt{17}.
+
+\subsection{Sampling and Preprocessing}
+
+Both model families filter by \texttt{metadata["language"] == "en"} and use the same coverage-aware sampling rule. If the requested sample size is less than the filtered split, the sampler first selects at least one available row for each SDG using \texttt{random.Random(seed)}, fills the remaining slots from a seeded shuffle of all other rows, truncates to the requested size, and shuffles the selected rows again. If the requested size is non-positive or at least the split size, it uses the full split after \texttt{pandas.sample(frac=1.0, random\_state=seed)}. For the test set, the sweep passes \texttt{test\_seed=43}; because \texttt{1470} exceeds the English test size, all \texttt{1057} English test rows are used in shuffled order.
+
+TF-IDF text preprocessing replaces standalone numbers with \texttt{NUM}, removes punctuation, collapses whitespace, lowercases, and strips leading/trailing whitespace. BERT text preprocessing only converts missing text to an empty string, replaces the Unicode non-character \texttt{U+FFFE} with a space, collapses whitespace, and strips.
+
+\subsection{BERT Training}
+
+The BERT-family model is \texttt{sentence-transformers/all-MiniLM-L6-v2}. The tokenizer is loaded with \texttt{use\_fast=True}; by default the code uses local HuggingFace files only unless \texttt{--allow-download} is passed. Tokenization uses truncation, dynamic padding, \texttt{return\_tensors="pt"}, and \texttt{max\_length=128}. The model loads \texttt{AutoConfig} with \texttt{output\_attentions=True} and eager attention where supported, then loads \texttt{AutoModel}. The encoder is frozen except for the final \texttt{2} transformer layers by default; passing \texttt{--unfreeze-encoder} trains all encoder layers. The classifier pools the final hidden state of the \texttt{[CLS]} token, applies dropout using the encoder hidden dropout probability or \texttt{0.1}, and maps the hidden size to \texttt{17} logits with one linear layer. The loss is \texttt{BCEWithLogitsLoss}.
+
+For each BERT run, the script seeds Python, NumPy, and PyTorch with the run seed. Training uses \texttt{AdamW}, learning rate \texttt{5e-5}, batch size \texttt{8}, \texttt{3} epochs, no scheduler, no class weighting, and gradient clipping at norm \texttt{1.0}. The training loader shuffles batches; the test loader does not. Probabilities are \texttt{sigmoid(logits)}. Predictions use \texttt{probability > 0.3}; if a row has no positive labels after thresholding, the highest-probability SDG is forced on as a top-1 fallback. Each run saves a checkpoint \texttt{model.pt}, \texttt{run\_config.json}, \texttt{metrics.json}, \texttt{examples.json}, \texttt{results.json}, and an \texttt{artifact.json} handoff file under \texttt{artifacts/bert\_train\{size\}\_seed\{seed\}/}.
+
+\subsection{TF-IDF Baseline}
+
+The baseline converts labels with \texttt{MultiLabelBinarizer(classes=range(1,18))}. It uses \texttt{TfidfVectorizer(strip\_accents="ascii", lowercase=False, ngram\_range=(1,1), min\_df=10, max\_df=0.9, max\_features=10000, binary=True)}. It trains one \texttt{SGDClassifier} per SDG label with \texttt{loss="hinge"}, \texttt{penalty="l2"}, \texttt{alpha=1e-4}, \texttt{shuffle=True}, \texttt{learning\_rate="optimal"}, \texttt{random\_state=seed}, \texttt{early\_stopping=True}, \texttt{validation\_fraction=0.2}, and \texttt{class\_weight="balanced"}. If a label column has only one class in a training slice, the saved model list stores \texttt{None} for that SDG. During baseline training metrics, such a column predicts the constant training value; during the separate evaluation stage, \texttt{None} columns predict \texttt{0}. Each baseline artifact saves \texttt{results.json}, \texttt{tfidf\_model.joblib}, and \texttt{artifact.json} under \texttt{artifacts/tfidf\_train\{size\}\_seed\{seed\}/}.
+
+\subsection{Evaluation, Sweeps, and Reporting}
+
+The evaluation stage discovers all \texttt{artifact.json} files under \texttt{artifacts/}. BERT artifacts are reloaded from \texttt{model.pt}, rebuilt with the checkpoint model name, threshold, batch size, max length, trainable-layer setting, and language, then evaluated on the same English test split. TF-IDF artifacts reload the saved vectorizer, per-label classifiers, and binarizer, then recompute predictions on the same English test split. Metrics are micro-F1, macro-F1, weighted-F1, subset accuracy, and per-label F1 with \texttt{zero\_division=0}. The summary groups rows by \texttt{model\_type} and \texttt{train\_size}, then reports means and sample standard deviations across available seeds.
+
+The evaluation stage writes \texttt{results/evaluation\_by\_seed.csv}, \texttt{results/evaluation\_summary.csv}, \texttt{results/evaluation\_summary.json}, and \texttt{results/evaluation\_summary.md}. It also writes two threshold sweeps at thresholds \texttt{0.20}, \texttt{0.25}, \texttt{0.30}, \texttt{0.35}, \texttt{0.40}, \texttt{0.45}, and \texttt{0.50}: \texttt{threshold\_sweep.json} pools all evaluated artifacts, while \texttt{threshold\_sweep\_bert4k.json} pools only BERT artifacts with \texttt{train\_size=4000}. These sweeps use \texttt{probability >= threshold} and do not apply the BERT top-1 empty-prediction fallback. TF-IDF sweep scores are produced by applying a sigmoid transform to each classifier's \texttt{decision\_function} margin; these are diagnostic scores, not calibrated probabilities.
+
+The visualization stage reads the evaluation CSV/JSON files. It writes summary tables to \texttt{outputs/tables/}, plots micro-F1 and macro-F1 bar charts, plots BERT-vs-TF-IDF per-label F1 at 4000 training samples, writes the manuscript threshold table from \texttt{threshold\_sweep\_bert4k.json}, and selects the largest seed-42 BERT result file for single-artifact metric, per-label, and explanation-example figures. Explanation figures show at most five examples. For each example, the report displays top label probabilities and the five highest-scoring non-special, non-padding attention tokens. Generated tables and charts are copied into \texttt{manuscript/visualization/}. The manuscript compiler checks that the required table and comparison charts exist, runs \texttt{pdflatex} twice with \texttt{-interaction=nonstopmode -halt-on-error}, writes the PDF, and removes temporary LaTeX files.
 
 \begin{thebibliography}{9}
 

@@ -2,8 +2,8 @@
   "job": "compile_manuscript",
   "status": "completed",
   "phase": "latex",
-  "updated_at": "2026-05-07T03:09:48",
-  "last_heartbeat": "2026-05-07T03:09:48",
+  "updated_at": "2026-05-07T15:48:21",
+  "last_heartbeat": "2026-05-07T15:48:21",
   "pdf": "manuscript/sdg_lens_manuscript.pdf",
   "log": "manuscript/compile_stdout.log"
 }
