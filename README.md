@@ -25,6 +25,16 @@ sudo apt install texlive-latex-base texlive-latex-extra
 sudo apt install texlive-xetex fonts-crosextra-carlito
 ```
 
+On Windows, install a LaTeX distribution such as:
+
+TeX Live:
+https://tug.org/texlive/windows.html
+
+OR MiKTeX:
+https://miktex.org/download
+
+Or you can just ignore this step because it's just manuscript compilation
+
 ## Setup
 
 Clone the repo:
