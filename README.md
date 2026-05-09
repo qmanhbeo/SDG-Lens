@@ -3,6 +3,8 @@
 Multi-label classifier with attention-based explanation proxy for UN Sustainable
 Development Goals (SDGs), adapted from the HateXplain approach.
 
+For quick inspection of the most interesting results, see [examples_results](./examples_results/)
+
 ## Prerequisite
 
 - Python 3.10–3.12
@@ -23,13 +25,13 @@ sudo apt install texlive-xetex fonts-crosextra-carlito
 
 On Windows, install a LaTeX distribution such as:
 
-TeX Live:
-https://tug.org/texlive/windows.html
+```bash
+# TeX Live: https://tug.org/texlive/windows.html
 
-OR MiKTeX:
-https://miktex.org/download
+# OR MiKTeX: https://miktex.org/download
+```
 
-Or you can just ignore this step because it's just manuscript compilation
+Or you can just ignore this step because it's just manuscript compilation, left in for better reproducibility
 
 ## Setup
 
@@ -61,20 +63,10 @@ The pipeline will skip training and reuse the committed artifacts automatically.
 python main.py sweep --allow-download
 
 # If CUDA is not available on your machine, run the same pipeline with `--device cpu`.
-python main.py sweep --device cpu
+python main.py sweep --allow-download --device cpu
 
 # Check what the pipeline would do without running anything
 python main.py sweep --dry-run
-```
-
-To export attention examples separately (or rerun with different options):
-```bash
-python main.py export-examples --limit 3 --device cpu
-```
-
-To compile the manuscript PDF (requires LaTeX), run separately:
-```bash
-python main.py compile
 ```
 
 To run a subset of seeds or sizes:
@@ -127,7 +119,9 @@ python main.py train
 python main.py baseline
 python main.py evaluate
 python main.py visualize
+python main.py export-examples
 python main.py compile
+# Append flag --help to each for full guide
 ```
 
 ## Outputs
@@ -153,8 +147,6 @@ manuscript/
 
 ## Notes
 
-- Attention tokens are proxy evidence, not validated causal explanations. SDGi
-  provides SDG labels but no token-level rationale ground truth.
 - Both BERT and TF-IDF artifacts (all 30) are committed to the repository.
   The sweep stage skips training when fine-tuned checkpoint weights are present.
 
