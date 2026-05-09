@@ -161,6 +161,9 @@ def cmd_sweep(args: argparse.Namespace) -> int:
         ("5/5 export attention examples", "export_attention_examples.py"),
     ]
     for label, script_name in stages:
+        # Auto-overwrite exports during sweep for idempotent behavior
+        if script_name == "export_attention_examples.py":
+            args.overwrite = True
         run_stage(label, script_name, args)
     print("[main] sweep complete")
     return 0
