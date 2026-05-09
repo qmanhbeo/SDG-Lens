@@ -119,6 +119,17 @@ def stage_command(script_name: str, args: argparse.Namespace) -> list[str]:
         if (v := getattr(args, "tex", None)) is not None:
             command.extend(["--tex", v])
 
+    elif script_name == "export_attention_examples.py":
+        # Export attention examples: forward device, allow-download, overwrite, limit
+        if (v := getattr(args, "device", None)) is not None:
+            command.extend(["--device", v])
+        if getattr(args, "allow_download", False):
+            command.append("--allow-download")
+        if getattr(args, "overwrite", False):
+            command.append("--overwrite")
+        if (v := getattr(args, "limit", None)) is not None:
+            command.extend(["--limit", str(v)])
+
     return command
 
 
@@ -137,16 +148,17 @@ def run_stage(label: str, script_name: str, args: argparse.Namespace) -> None:
 
 
 def cmd_sweep(args: argparse.Namespace) -> int:
-    """Run the full reproducible pipeline in dependency order."""
+    """Run the reproducible ML pipeline in dependency order."""
     # The ordering reflects the artifact contract: BERT and TF-IDF write
     # metadata, evaluation aggregates metadata, visualization reads evaluation
-    # outputs, and the manuscript compile requires visualization assets.
+    # outputs, and export generates full test-set attention examples.
+    # Manuscript compilation is optional and can be run separately.
     stages = [
         ("1/5 train neural model", "train.py"),
         ("2/5 train baseline", "baseline.py"),
         ("3/5 evaluate artifacts", "evaluate.py"),
         ("4/5 visualize results", "visualize.py"),
-        ("5/5 compile manuscript", "compile_manuscript.py"),
+        ("5/5 export attention examples", "export_attention_examples.py"),
     ]
     for label, script_name in stages:
         run_stage(label, script_name, args)
@@ -164,8 +176,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     sweep = subparsers.add_parser(
         "sweep",
-        help="Run all pipeline stages in order.",
-        description="Run train, baseline, evaluate, visualize, and manuscript compile.",
+        help="Run train, baseline, evaluate, visualize, and export attention examples.",
+        description="Run train, baseline, evaluate, visualize, and export attention examples (compile is optional, run separately).",
     )
     _add_sweep_args(sweep)
 
@@ -204,6 +216,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_compile_args(compile_parser)
 
+    export_parser = subparsers.add_parser(
+        "export-examples",
+        help="Export full test-set attention examples.",
+        description="Run scripts/export_attention_examples.py to export full attention examples.",
+    )
+    _add_export_args(export_parser)
+
     sweep.set_defaults(func=cmd_sweep)
     train_parser.set_defaults(
         func=lambda a: (run_stage("train", "train.py", a), 0)[1]
@@ -219,6 +238,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     compile_parser.set_defaults(
         func=lambda a: (run_stage("compile", "compile_manuscript.py", a), 0)[1]
+    )
+    export_parser.set_defaults(
+        func=lambda a: (run_stage("export-examples", "export_attention_examples.py", a), 0)[1]
     )
     return parser
 
@@ -409,6 +431,73 @@ def _add_evaluate_args(p: argparse.ArgumentParser) -> None:
 
 def _add_visualize_args(p: argparse.ArgumentParser) -> None:
     """Arguments forwarded to visualization generation."""
+    p.add_argument(
+        "--dry-run", action="store_true",
+        help="Print stages without executing them.",
+    )
+
+
+def _add_export_args(p: argparse.ArgumentParser) -> None:
+    """Arguments forwarded to attention example export."""
+    p.add_argument(
+        "--artifact-dir",
+        type=Path,
+        default=PROJECT_ROOT / "artifacts" / "bert_train4000_seed42",
+        help="BERT artifact directory (default: artifacts/bert_train4000_seed42).",
+    )
+    p.add_argument(
+        "--run-dir",
+        type=Path,
+        default=None,
+        help="Explicit run directory (default: auto-detect latest).",
+    )
+    p.add_argument(
+        "--output-dir",
+        type=Path,
+        default=PROJECT_ROOT / "examples_results",
+        help="Output directory for exported examples.",
+    )
+    p.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="Limit number of examples (default: all 1057 English test examples).",
+    )
+    p.add_argument(
+        "--device",
+        type=str,
+        default="cuda",
+        choices=["cuda", "cpu"],
+        help="Device to use (default: cuda).",
+    )
+    p.add_argument(
+        "--top-tokens",
+        type=int,
+        default=12,
+        help="Number of top attended tokens to export (default: 12).",
+    )
+    p.add_argument(
+        "--top-labels",
+        type=int,
+        default=5,
+        help="Number of top label scores to export (default: 5).",
+    )
+    p.add_argument(
+        "--allow-download",
+        action="store_true",
+        help="Allow downloading HuggingFace model files if not cached.",
+    )
+    p.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing output files.",
+    )
+    p.add_argument(
+        "--test-seed",
+        type=int,
+        default=43,
+        help="Test set sampling seed (default: 43).",
+    )
     p.add_argument(
         "--dry-run", action="store_true",
         help="Print stages without executing them.",
